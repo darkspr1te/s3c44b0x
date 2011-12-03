@@ -1,0 +1,12 @@
+在ubuntu下，执行arm-elf-tools-20040427.sh时，会提示下面的错误
+#tail: 无法打开"+43" 读取数据: 没有那个文件或目录
+#
+#gzip: stdin: not in gzip format
+#tar: 它似乎不像是一个 tar 归档文件
+#tar: 由于前次错误，将以上次的错误状态退出
+
+网上的解决方法是
+将第39行的代码：
+tail +${SKIP} ${SCRIPT} | gunzip | tar xvf -
+改成如下：
+tail -n +${SKIP} ${SCRIPT} | gunzip | tar xvf -
