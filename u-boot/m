@@ -1,0 +1,109 @@
+make[1]: Entering directory `/cygdrive/d/cygwindir/u-boot/tools'
+make[1]: `.depend' is up to date.
+make[1]: Leaving directory `/cygdrive/d/cygwindir/u-boot/tools'
+make[1]: Entering directory `/cygdrive/d/cygwindir/u-boot/examples'
+make[1]: `.depend' is up to date.
+make[1]: Leaving directory `/cygdrive/d/cygwindir/u-boot/examples'
+make[1]: Entering directory `/cygdrive/d/cygwindir/u-boot/post'
+make[1]: `.depend' is up to date.
+make[1]: Leaving directory `/cygdrive/d/cygwindir/u-boot/post'
+make[1]: Entering directory `/cygdrive/d/cygwindir/u-boot/post/cpu'
+make[1]: `.depend' is up to date.
+make[1]: Leaving directory `/cygdrive/d/cygwindir/u-boot/post/cpu'
+make -C tools all
+make[1]: Entering directory `/cygdrive/d/cygwindir/u-boot/tools'
+make[1]: Leaving directory `/cygdrive/d/cygwindir/u-boot/tools'
+make -C examples all
+make[1]: Entering directory `/cygdrive/d/cygwindir/u-boot/examples'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/cygdrive/d/cygwindir/u-boot/examples'
+make -C post all
+make[1]: Entering directory `/cygdrive/d/cygwindir/u-boot/post'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/cygdrive/d/cygwindir/u-boot/post'
+make -C post/cpu all
+make[1]: Entering directory `/cygdrive/d/cygwindir/u-boot/post/cpu'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/cygdrive/d/cygwindir/u-boot/post/cpu'
+make -C `dirname lib_generic/libgeneric.a`
+make[1]: Entering directory `/cygdrive/d/cygwindir/u-boot/lib_generic'
+make[1]: `libgeneric.a' is up to date.
+make[1]: Leaving directory `/cygdrive/d/cygwindir/u-boot/lib_generic'
+make -C `dirname board/itsn/s3c44b0/libs3c44b0.a`
+make[1]: Entering directory `/cygdrive/d/cygwindir/u-boot/board/itsn/s3c44b0'
+arm-elf-gcc -g  -Os   -fno-strict-aliasing  -fno-common -ffixed-r8 -mshort-load-bytes -msoft-float -D__KERNEL__ -DTEXT_BASE=0x0C700000 -I/cygdrive/d/cygwindir/u-boot/include -fno-builtin -ffreestanding -nostdinc -isystem /armtools/lib/gcc-lib/arm-elf/2.95.3/include -pipe  -DCONFIG_ARM -D__ARM__ -mapcs-32 -march=armv4 -mtune=arm7tdmi -msoft-float -Uarm  -Wall -Wstrict-prototypes -c -o flash.o flash.c
+arm-elf-ar crv libs3c44b0.a hfrks3c44b0.o flash.o memsetup.o
+r - hfrks3c44b0.o
+r - flash.o
+r - memsetup.o
+make[1]: Leaving directory `/cygdrive/d/cygwindir/u-boot/board/itsn/s3c44b0'
+make -C `dirname cpu/s3c44b0/libs3c44b0.a`
+make[1]: Entering directory `/cygdrive/d/cygwindir/u-boot/cpu/s3c44b0'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/cygdrive/d/cygwindir/u-boot/cpu/s3c44b0'
+make -C `dirname lib_arm/libarm.a`
+make[1]: Entering directory `/cygdrive/d/cygwindir/u-boot/lib_arm'
+make[1]: `libarm.a' is up to date.
+make[1]: Leaving directory `/cygdrive/d/cygwindir/u-boot/lib_arm'
+make -C `dirname fs/cramfs/libcramfs.a`
+make[1]: Entering directory `/cygdrive/d/cygwindir/u-boot/fs/cramfs'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/cygdrive/d/cygwindir/u-boot/fs/cramfs'
+make -C `dirname fs/fat/libfat.a`
+make[1]: Entering directory `/cygdrive/d/cygwindir/u-boot/fs/fat'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/cygdrive/d/cygwindir/u-boot/fs/fat'
+make -C `dirname fs/fdos/libfdos.a`
+make[1]: Entering directory `/cygdrive/d/cygwindir/u-boot/fs/fdos'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/cygdrive/d/cygwindir/u-boot/fs/fdos'
+make -C `dirname fs/jffs2/libjffs2.a`
+make[1]: Entering directory `/cygdrive/d/cygwindir/u-boot/fs/jffs2'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/cygdrive/d/cygwindir/u-boot/fs/jffs2'
+make -C `dirname fs/reiserfs/libreiserfs.a`
+make[1]: Entering directory `/cygdrive/d/cygwindir/u-boot/fs/reiserfs'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/cygdrive/d/cygwindir/u-boot/fs/reiserfs'
+make -C `dirname net/libnet.a`
+make[1]: Entering directory `/cygdrive/d/cygwindir/u-boot/net'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/cygdrive/d/cygwindir/u-boot/net'
+make -C `dirname disk/libdisk.a`
+make[1]: Entering directory `/cygdrive/d/cygwindir/u-boot/disk'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/cygdrive/d/cygwindir/u-boot/disk'
+make -C `dirname rtc/librtc.a`
+make[1]: Entering directory `/cygdrive/d/cygwindir/u-boot/rtc'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/cygdrive/d/cygwindir/u-boot/rtc'
+make -C `dirname dtt/libdtt.a`
+make[1]: Entering directory `/cygdrive/d/cygwindir/u-boot/dtt'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/cygdrive/d/cygwindir/u-boot/dtt'
+make -C `dirname drivers/libdrivers.a`
+make[1]: Entering directory `/cygdrive/d/cygwindir/u-boot/drivers'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/cygdrive/d/cygwindir/u-boot/drivers'
+make -C `dirname drivers/sk98lin/libsk98lin.a`
+make[1]: Entering directory `/cygdrive/d/cygwindir/u-boot/drivers/sk98lin'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/cygdrive/d/cygwindir/u-boot/drivers/sk98lin'
+make -C `dirname post/libpost.a`
+make[1]: Entering directory `/cygdrive/d/cygwindir/u-boot/post'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/cygdrive/d/cygwindir/u-boot/post'
+make -C `dirname post/cpu/libcpu.a`
+make[1]: Entering directory `/cygdrive/d/cygwindir/u-boot/post/cpu'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/cygdrive/d/cygwindir/u-boot/post/cpu'
+make -C `dirname common/libcommon.a`
+make[1]: Entering directory `/cygdrive/d/cygwindir/u-boot/common'
+make[1]: Nothing to be done for `all'.
+make[1]: Leaving directory `/cygdrive/d/cygwindir/u-boot/common'
+UNDEF_SYM=`arm-elf-objdump -x lib_generic/libgeneric.a board/itsn/s3c44b0/libs3c44b0.a cpu/s3c44b0/libs3c44b0.a lib_arm/libarm.a fs/cramfs/libcramfs.a fs/fat/libfat.a fs/fdos/libfdos.a fs/jffs2/libjffs2.a fs/reiserfs/libreiserfs.a net/libnet.a disk/libdisk.a rtc/librtc.a dtt/libdtt.a drivers/libdrivers.a drivers/sk98lin/libsk98lin.a post/libpost.a post/cpu/libcpu.a common/libcommon.a |sed  -n -e 's/.*\(__u_boot_cmd_.*\)/-u\1/p'|sort|uniq`;\
+	arm-elf-ld -Bstatic -T /cygdrive/d/cygwindir/u-boot/board/itsn/s3c44b0/u-boot.lds -Ttext 0x0C700000  $UNDEF_SYM cpu/s3c44b0/start.o \
+		--start-group lib_generic/libgeneric.a board/itsn/s3c44b0/libs3c44b0.a cpu/s3c44b0/libs3c44b0.a lib_arm/libarm.a fs/cramfs/libcramfs.a fs/fat/libfat.a fs/fdos/libfdos.a fs/jffs2/libjffs2.a fs/reiserfs/libreiserfs.a net/libnet.a disk/libdisk.a rtc/librtc.a dtt/libdtt.a drivers/libdrivers.a drivers/sk98lin/libsk98lin.a post/libpost.a post/cpu/libcpu.a common/libcommon.a --no-warn-mismatch -L /armtools/lib/gcc-lib/arm-elf/2.95.3 -lgcc --end-group \
+		-Map u-boot.map -o u-boot
+arm-elf-objcopy --gap-fill=0xff -O srec u-boot u-boot.srec
+arm-elf-objcopy --gap-fill=0xff -O binary u-boot u-boot.bin
