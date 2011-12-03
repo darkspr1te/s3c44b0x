@@ -1,0 +1,1 @@
+APPLET_SOURCES := hostname.c ifconfig.c init.c mkdir.c mount.c nfsmount.c ping.c 

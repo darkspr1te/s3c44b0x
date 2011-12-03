@@ -1,0 +1,7 @@
+/bin/hostname
+/sbin/ifconfig
+/sbin/init
+/linuxrc
+/bin/mkdir
+/bin/mount
+/bin/ping

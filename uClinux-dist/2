@@ -1,0 +1,314 @@
+make ARCH=armnommu CROSS_COMPILE=arm-elf- -C linux-2.4.x  || exit 1
+make[1]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x'
+. scripts/mkversion > .tmpversion
+arm-elf-gcc -D__KERNEL__ -I/home/fred/uClinux-dist/linux-2.4.x/include  -Wall -Wstrict-prototypes -Wno-trigraphs -O2 -fno-strict-aliasing -fno-common -fno-common -pipe -fno-builtin -D__linux__ -DNO_MM -mapcs-32 -march=armv4 -mtune=arm7tdmi -mshort-load-bytes -msoft-float  -DUTS_MACHINE='"armnommu"' -DKBUILD_BASENAME=version -c -o init/version.o init/version.c
+make[2]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/arch/armnommu/tools'
+make[2]: Nothing to be done for `all'.
+make[2]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/arch/armnommu/tools'
+make CFLAGS="-D__KERNEL__ -I/home/fred/uClinux-dist/linux-2.4.x/include  -Wall -Wstrict-prototypes -Wno-trigraphs -O2 -fno-strict-aliasing -fno-common -fno-common -pipe -fno-builtin -D__linux__ -DNO_MM -mapcs-32 -march=armv4 -mtune=arm7tdmi -mshort-load-bytes -msoft-float " -C  kernel
+make[2]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/kernel'
+make all_targets
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/kernel'
+make[3]: Nothing to be done for `all_targets'.
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/kernel'
+make[2]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/kernel'
+make CFLAGS="-D__KERNEL__ -I/home/fred/uClinux-dist/linux-2.4.x/include  -Wall -Wstrict-prototypes -Wno-trigraphs -O2 -fno-strict-aliasing -fno-common -fno-common -pipe -fno-builtin -D__linux__ -DNO_MM -mapcs-32 -march=armv4 -mtune=arm7tdmi -mshort-load-bytes -msoft-float " -C  drivers
+make[2]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers'
+make -C block
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/block'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/block'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/block'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/block'
+make -C cdrom
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/cdrom'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/cdrom'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/cdrom'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/cdrom'
+make -C char
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/char'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/char'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/char'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/char'
+make -C hotplug
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/hotplug'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/hotplug'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/hotplug'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/hotplug'
+make -C media
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/media'
+make -C radio
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/media/radio'
+make all_targets
+make[5]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/media/radio'
+make[5]: Nothing to be done for `all_targets'.
+make[5]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/media/radio'
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/media/radio'
+make -C video
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/media/video'
+make all_targets
+make[5]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/media/video'
+make[5]: Nothing to be done for `all_targets'.
+make[5]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/media/video'
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/media/video'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/media'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/media'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/media'
+make -C misc
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/misc'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/misc'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/misc'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/misc'
+make -C net
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/net'
+make -C appletalk
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/net/appletalk'
+make all_targets
+make[5]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/net/appletalk'
+make[5]: Nothing to be done for `all_targets'.
+make[5]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/net/appletalk'
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/net/appletalk'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/net'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/net'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/net'
+make -C parport
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/parport'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/parport'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/parport'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/parport'
+make -C serial
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/serial'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/serial'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/serial'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/serial'
+make -C sound
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/sound'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/sound'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/sound'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers/sound'
+make all_targets
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/drivers'
+make[3]: Nothing to be done for `all_targets'.
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers'
+make[2]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/drivers'
+make CFLAGS="-D__KERNEL__ -I/home/fred/uClinux-dist/linux-2.4.x/include  -Wall -Wstrict-prototypes -Wno-trigraphs -O2 -fno-strict-aliasing -fno-common -fno-common -pipe -fno-builtin -D__linux__ -DNO_MM -mapcs-32 -march=armv4 -mtune=arm7tdmi -mshort-load-bytes -msoft-float " -C  mmnommu
+make[2]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/mmnommu'
+make all_targets
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/mmnommu'
+make[3]: Nothing to be done for `all_targets'.
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/mmnommu'
+make[2]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/mmnommu'
+make CFLAGS="-D__KERNEL__ -I/home/fred/uClinux-dist/linux-2.4.x/include  -Wall -Wstrict-prototypes -Wno-trigraphs -O2 -fno-strict-aliasing -fno-common -fno-common -pipe -fno-builtin -D__linux__ -DNO_MM -mapcs-32 -march=armv4 -mtune=arm7tdmi -mshort-load-bytes -msoft-float " -C  fs
+make[2]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/fs'
+make -C ext2
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/fs/ext2'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/fs/ext2'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/fs/ext2'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/fs/ext2'
+make -C partitions
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/fs/partitions'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/fs/partitions'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/fs/partitions'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/fs/partitions'
+make -C proc
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/fs/proc'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/fs/proc'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/fs/proc'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/fs/proc'
+make -C ramfs
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/fs/ramfs'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/fs/ramfs'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/fs/ramfs'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/fs/ramfs'
+make -C romfs
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/fs/romfs'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/fs/romfs'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/fs/romfs'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/fs/romfs'
+make all_targets
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/fs'
+make[3]: Nothing to be done for `all_targets'.
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/fs'
+make[2]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/fs'
+make CFLAGS="-D__KERNEL__ -I/home/fred/uClinux-dist/linux-2.4.x/include  -Wall -Wstrict-prototypes -Wno-trigraphs -O2 -fno-strict-aliasing -fno-common -fno-common -pipe -fno-builtin -D__linux__ -DNO_MM -mapcs-32 -march=armv4 -mtune=arm7tdmi -mshort-load-bytes -msoft-float " -C  net
+make[2]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/net'
+make -C 802
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/net/802'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/net/802'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/net/802'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/net/802'
+make -C 8021q
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/net/8021q'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/net/8021q'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/net/8021q'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/net/8021q'
+make -C appletalk
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/net/appletalk'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/net/appletalk'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/net/appletalk'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/net/appletalk'
+make -C core
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/net/core'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/net/core'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/net/core'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/net/core'
+make -C ethernet
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/net/ethernet'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/net/ethernet'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/net/ethernet'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/net/ethernet'
+make -C ipv4
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/net/ipv4'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/net/ipv4'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/net/ipv4'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/net/ipv4'
+make -C ipx
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/net/ipx'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/net/ipx'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/net/ipx'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/net/ipx'
+make -C netlink
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/net/netlink'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/net/netlink'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/net/netlink'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/net/netlink'
+make -C packet
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/net/packet'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/net/packet'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/net/packet'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/net/packet'
+make -C sched
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/net/sched'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/net/sched'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/net/sched'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/net/sched'
+make all_targets
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/net'
+make[3]: Nothing to be done for `all_targets'.
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/net'
+make[2]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/net'
+make CFLAGS="-D__KERNEL__ -I/home/fred/uClinux-dist/linux-2.4.x/include  -Wall -Wstrict-prototypes -Wno-trigraphs -O2 -fno-strict-aliasing -fno-common -fno-common -pipe -fno-builtin -D__linux__ -DNO_MM -mapcs-32 -march=armv4 -mtune=arm7tdmi -mshort-load-bytes -msoft-float " -C  ipc
+make[2]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/ipc'
+make all_targets
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/ipc'
+make[3]: Nothing to be done for `all_targets'.
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/ipc'
+make[2]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/ipc'
+make CFLAGS="-D__KERNEL__ -I/home/fred/uClinux-dist/linux-2.4.x/include  -Wall -Wstrict-prototypes -Wno-trigraphs -O2 -fno-strict-aliasing -fno-common -fno-common -pipe -fno-builtin -D__linux__ -DNO_MM -mapcs-32 -march=armv4 -mtune=arm7tdmi -mshort-load-bytes -msoft-float " -C  lib
+make[2]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/lib'
+make -C zlib_deflate
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/lib/zlib_deflate'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/lib/zlib_deflate'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/lib/zlib_deflate'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/lib/zlib_deflate'
+make -C zlib_inflate
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/lib/zlib_inflate'
+make all_targets
+make[4]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/lib/zlib_inflate'
+make[4]: Nothing to be done for `all_targets'.
+make[4]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/lib/zlib_inflate'
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/lib/zlib_inflate'
+make all_targets
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/lib'
+make[3]: Nothing to be done for `all_targets'.
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/lib'
+make[2]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/lib'
+make CFLAGS="-D__KERNEL__ -I/home/fred/uClinux-dist/linux-2.4.x/include  -Wall -Wstrict-prototypes -Wno-trigraphs -O2 -fno-strict-aliasing -fno-common -fno-common -pipe -fno-builtin -D__linux__ -DNO_MM -mapcs-32 -march=armv4 -mtune=arm7tdmi -mshort-load-bytes -msoft-float " -C  crypto
+make[2]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/crypto'
+make all_targets
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/crypto'
+make[3]: Nothing to be done for `all_targets'.
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/crypto'
+make[2]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/crypto'
+make CFLAGS="-D__KERNEL__ -I/home/fred/uClinux-dist/linux-2.4.x/include  -Wall -Wstrict-prototypes -Wno-trigraphs -O2 -fno-strict-aliasing -fno-common -fno-common -pipe -fno-builtin -D__linux__ -DNO_MM -mapcs-32 -march=armv4 -mtune=arm7tdmi -mshort-load-bytes -msoft-float " -C  arch/armnommu/mach-S3C44B0X
+make[2]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/arch/armnommu/mach-S3C44B0X'
+make all_targets
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/arch/armnommu/mach-S3C44B0X'
+make[3]: Nothing to be done for `all_targets'.
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/arch/armnommu/mach-S3C44B0X'
+make[2]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/arch/armnommu/mach-S3C44B0X'
+make CFLAGS="-D__KERNEL__ -I/home/fred/uClinux-dist/linux-2.4.x/include  -Wall -Wstrict-prototypes -Wno-trigraphs -O2 -fno-strict-aliasing -fno-common -fno-common -pipe -fno-builtin -D__linux__ -DNO_MM -mapcs-32 -march=armv4 -mtune=arm7tdmi -mshort-load-bytes -msoft-float " -C  arch/armnommu/kernel
+make[2]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/arch/armnommu/kernel'
+make[2]: Nothing to be done for `all'.
+make[2]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/arch/armnommu/kernel'
+make CFLAGS="-D__KERNEL__ -I/home/fred/uClinux-dist/linux-2.4.x/include  -Wall -Wstrict-prototypes -Wno-trigraphs -O2 -fno-strict-aliasing -fno-common -fno-common -pipe -fno-builtin -D__linux__ -DNO_MM -mapcs-32 -march=armv4 -mtune=arm7tdmi -mshort-load-bytes -msoft-float " -C  arch/armnommu/mm
+make[2]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/arch/armnommu/mm'
+make all_targets
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/arch/armnommu/mm'
+make[3]: Nothing to be done for `all_targets'.
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/arch/armnommu/mm'
+make[2]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/arch/armnommu/mm'
+make CFLAGS="-D__KERNEL__ -I/home/fred/uClinux-dist/linux-2.4.x/include  -Wall -Wstrict-prototypes -Wno-trigraphs -O2 -fno-strict-aliasing -fno-common -fno-common -pipe -fno-builtin -D__linux__ -DNO_MM -mapcs-32 -march=armv4 -mtune=arm7tdmi -mshort-load-bytes -msoft-float " -C  arch/armnommu/lib
+make[2]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/arch/armnommu/lib'
+make all_targets
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/arch/armnommu/lib'
+make[3]: Nothing to be done for `all_targets'.
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/arch/armnommu/lib'
+make[2]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/arch/armnommu/lib'
+make CFLAGS="-D__KERNEL__ -I/home/fred/uClinux-dist/linux-2.4.x/include  -Wall -Wstrict-prototypes -Wno-trigraphs -O2 -fno-strict-aliasing -fno-common -fno-common -pipe -fno-builtin -D__linux__ -DNO_MM -mapcs-32 -march=armv4 -mtune=arm7tdmi -mshort-load-bytes -msoft-float " -C  arch/armnommu/nwfpe
+make[2]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/arch/armnommu/nwfpe'
+make all_targets
+make[3]: Entering directory `/home/fred/uClinux-dist/linux-2.4.x/arch/armnommu/nwfpe'
+make[3]: Nothing to be done for `all_targets'.
+make[3]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/arch/armnommu/nwfpe'
+make[2]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x/arch/armnommu/nwfpe'
+arm-elf-ld -p -X -T arch/armnommu/vmlinux.lds arch/armnommu/kernel/head-armv.o arch/armnommu/kernel/init_task.o init/main.o init/version.o init/do_mounts.o \
+	--start-group \
+	arch/armnommu/kernel/kernel.o arch/armnommu/mm/mm.o arch/armnommu/mach-S3C44B0X/S3C44B0X.o kernel/kernel.o mmnommu/mmnommu.o fs/fs.o ipc/ipc.o  \
+	 drivers/serial/serial.o drivers/char/char.o drivers/block/block.o drivers/misc/misc.o drivers/net/net.o drivers/net/appletalk/appletalk.o drivers/media/media.o \
+	net/network.o \
+	arch/armnommu/nwfpe/math-emu.o arch/armnommu/lib/lib.a /home/fred/uClinux-dist/linux-2.4.x/lib/lib.a /usr/local/lib/gcc-lib/arm-elf/2.95.3/libgcc.a \
+	--end-group \
+	-o linux
+make[1]: Leaving directory `/home/fred/uClinux-dist/linux-2.4.x'

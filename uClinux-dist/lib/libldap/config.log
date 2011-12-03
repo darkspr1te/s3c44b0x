@@ -1,0 +1,82 @@
+This file contains any messages produced by compilers while
+running configure, to aid debugging if configure makes a mistake.
+
+configure:878: checking host system type
+configure:919: checking target system type
+configure:959: checking build system type
+configure:1036: checking for a BSD compatible install
+configure:1093: checking whether build environment is sane
+configure:1154: checking for mawk
+configure:1154: checking for gawk
+configure:1184: checking whether make sets ${MAKE}
+configure:1224: checking for working aclocal
+configure:1237: checking for working autoconf
+configure:1250: checking for working automake
+configure:1263: checking for working autoheader
+configure:1276: checking for working makeinfo
+configure:1296: checking for gnutar
+configure:1296: checking for gtar
+configure:1366: checking configure arguments
+configure:2852: checking for a BSD compatible install
+configure:3077: checking for Cygwin environment
+configure:3093: arm-elf-gcc  -c -O2 -g -fomit-frame-pointer   -fno-builtin -DEMBED -I/s3c44b0/uClinux-dist/lib/uClibc/include -I/s3c44b0/uClinux-dist -Dlinux -D__linux__ -D__uClinux__ -Dunix -I/s3c44b0/uClinux-dist/linux-2.4.x/include  conftest.c 1>&5
+cc1: warning: -g with -fomit-frame-pointer may not give sensible debugging
+configure: In function `main':
+configure:3089: `__CYGWIN32__' undeclared (first use in this function)
+configure:3089: (Each undeclared identifier is reported only once
+configure:3089: for each function it appears in.)
+configure: failed program was:
+#line 3082 "configure"
+#include "confdefs.h"
+
+int main() {
+
+#ifndef __CYGWIN__
+#define __CYGWIN__ __CYGWIN32__
+#endif
+return __CYGWIN__;
+; return 0; }
+configure:3109: checking for mingw32 environment
+configure:3121: arm-elf-gcc  -c -O2 -g -fomit-frame-pointer   -fno-builtin -DEMBED -I/s3c44b0/uClinux-dist/lib/uClibc/include -I/s3c44b0/uClinux-dist -Dlinux -D__linux__ -D__uClinux__ -Dunix -I/s3c44b0/uClinux-dist/linux-2.4.x/include  conftest.c 1>&5
+cc1: warning: -g with -fomit-frame-pointer may not give sensible debugging
+configure: In function `main':
+configure:3117: `__MINGW32__' undeclared (first use in this function)
+configure:3117: (Each undeclared identifier is reported only once
+configure:3117: for each function it appears in.)
+configure: failed program was:
+#line 3114 "configure"
+#include "confdefs.h"
+
+int main() {
+return __MINGW32__;
+; return 0; }
+configure:3137: checking for EMX OS/2 environment
+configure:3149: arm-elf-gcc  -c -O2 -g -fomit-frame-pointer   -fno-builtin -DEMBED -I/s3c44b0/uClinux-dist/lib/uClibc/include -I/s3c44b0/uClinux-dist -Dlinux -D__linux__ -D__uClinux__ -Dunix -I/s3c44b0/uClinux-dist/linux-2.4.x/include  conftest.c 1>&5
+cc1: warning: -g with -fomit-frame-pointer may not give sensible debugging
+configure: In function `main':
+configure:3145: `__EMX__' undeclared (first use in this function)
+configure:3145: (Each undeclared identifier is reported only once
+configure:3145: for each function it appears in.)
+configure: failed program was:
+#line 3142 "configure"
+#include "confdefs.h"
+
+int main() {
+return __EMX__;
+; return 0; }
+configure:3165: checking how to run the C preprocessor
+configure:3186: arm-elf-gcc  -E  conftest.c >/dev/null 2>conftest.out
+configure:3270: checking for gcc
+configure:3383: checking whether the C compiler (arm-elf-gcc  -O2 -g -fomit-frame-pointer   -fno-builtin -DEMBED -I/s3c44b0/uClinux-dist/lib/uClibc/include -I/s3c44b0/uClinux-dist -Dlinux -D__linux__ -D__uClinux__ -Dunix -I/s3c44b0/uClinux-dist/linux-2.4.x/include  -lc) works
+configure:3399: arm-elf-gcc  -o conftest -O2 -g -fomit-frame-pointer   -fno-builtin -DEMBED -I/s3c44b0/uClinux-dist/lib/uClibc/include -I/s3c44b0/uClinux-dist -Dlinux -D__linux__ -D__uClinux__ -Dunix -I/s3c44b0/uClinux-dist/linux-2.4.x/include  -lc conftest.c  1>&5
+cc1: warning: -g with -fomit-frame-pointer may not give sensible debugging
+/usr/local/lib/gcc-lib/arm-elf/2.95.3/libgcc.a(__main.o)(.text+0xc4): In function `__do_global_ctors':
+: undefined reference to `__CTOR_LIST__'
+/usr/local/lib/gcc-lib/arm-elf/2.95.3/libgcc.a(__main.o)(.data+0x0): undefined reference to `__DTOR_LIST__'
+collect2: ld returned 1 exit status
+configure: failed program was:
+
+#line 3394 "configure"
+#include "confdefs.h"
+
+main(){return(0);}
