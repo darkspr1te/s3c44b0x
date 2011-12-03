@@ -1,0 +1,537 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
+<html><head>
+	<meta http-equiv="CONTENT-TYPE" content="text/html; charset=ISO-8859-1">
+	<title>Getting Familiar with uClinux/ARM 2</title>
+	<meta name="GENERATOR" content="OpenOffice.org 1.1.2  (Win32)">
+	<meta name="AUTHOR" content="Hyok S. Choi">
+	<meta name="CREATED" content="20041123;14512419">
+	<meta name="CHANGEDBY" content="Hyok S. Choi">
+	<meta name="CHANGED" content="20041123;15142405">
+	<style>
+	<!--
+		P { font-size: 12pt }
+		P.msonormal { margin-bottom: 0cm; font-size: 12pt }
+		H4.cjk { font-family: "Batang" }
+		P.text-body-indent { margin-left: 0.5cm; font-size: 12pt }
+		A:link { color: #0000ff }
+		A:visited { color: #0000ff }
+	-->
+	</style>
+</head>
+<body dir="LTR" vlink="#0000ff" lang="ko-KR" link="#0000ff">
+<h2><font face="Times New Roman"><span lang="en-US">Getting Familiar
+with uClinux/ARM 2.6</span></font></h2>
+<address><font face="Times New Roman, serif"><span lang="en-US"><i><font size="2"><font face="Arial, sans-serif">by
+Hyok S. Choi &lt;</font></font><a href="mailto:hyok.choi@samsung.com"><font size="2"><font face="Arial, sans-serif">hyok.choi@samsung.com&gt;</font></font></a></i></span></font></address>
+<address><font face="Arial, sans-serif"><font size="2"><span lang="en-US"><i>the
+author and maintainer of uClinux/ARM2.6</i></span></font></font></address>
+<address style="margin-bottom: 0.42cm">&nbsp;</address>
+<h4 class="cjk"><font face="Tahoma"><span lang="en-US">Why
+uClinux/ARM 2.6?</span></font></h4>
+<p><font face="Tahoma"><font size="2"><span lang="en-US">Why would you
+want to use uClinux? There could be many reasons to consider the
+uClinux for your embedded OS. Some of them could be as following:</span></font></font></p>
+<ul>
+	<li><p> <font face="Times New Roman, serif"><span lang="en-US"><font size="2"><font face="Tahoma"><b>Lightweight</b><br>You
+	can make a complete linux 2.6 preemptible kernel image including
+	console and some basic device drivers and ROMFS under 300KB!
+	(zImage) and the applications in flat-binary format are
+	approximately 30~50% lighter than typical conventional linux ELF
+	binaries, thanks to lighter standard C and C++ libraries. </font></font></span></font>
+	</p>
+	</li><li><p> <font face="Times New Roman, serif"><span lang="en-US"><font size="2"><font face="Tahoma"><b>XIP</b><br>With
+	much smaller RAM, you can execute your kernel and even the
+	applications by XIP(eXecution In Place). It could help you to boot
+	up faster, although the access time for the flash or rom for boot
+	image should be fast enough and/or enough cache size. (There could
+	be a trade-off between those values if we want to find the optimal
+	balance.)</font></font></span></font></p>
+	</li><li><p> <font face="Times New Roman, serif"><span lang="en-US"><font size="2"><font face="Tahoma"><b>Cheaper</b><br>It
+	is known that the MMU core size in typical ARM SoC wafer is about
+	30%. In typical network or embedded systems more than a half of
+	applications do not need the MMU. Many of RTOS do not use MMU in
+	default, even if target CPU has one.</font></font></span></font></p>
+	</li><li><p> <font face="Times New Roman, serif"><span lang="en-US"><font size="2"><font face="Tahoma"><b>Full
+	Linux API</b><br>You can use the full Linux APIs on your uClinux
+	platform with few exceptions. You can use the pThread in uClibc and
+	the standard system calls. There are plenty of applications which
+	are ported to uClinux in the userland in uClinux distribution
+	package.</font></font></span></font></p>
+	</li><li><p> <font face="Times New Roman, serif"><span lang="en-US"><font size="2"><font face="Tahoma"><b>Easier
+	to adapt</b><br>One of the interesting natures of uClinux is the
+	possibility of user application accessing the whole system,
+	including registers in devices. With a bit of wrapper, we can make
+	the firmware code run on uClinux as a plain application! Of course,
+	you can add some device driver and call the linux system calls and
+	use many open Ips in mixed with the old firmware code. If you're
+	planning to migrate your firmware codes to Linux, but you're not
+	familiar with Linux system programming, uClinux could be a good
+	starting point. ;-)</font></font></span></font></p>
+	</li><li><p> <font face="Times New Roman, serif"><span lang="en-US"><font size="2"><font face="Tahoma"><b>Full
+	Linux 2.6 kernel features</b><br>Although, it is lighter, it
+	supports almost full features of conventional linux 2.6 kernel,
+	including preemptible kernel feature and so many file-systems,
+	device drivers. Porting of device drivers for conventional Linux is
+	handy. Almost all codes should be compiled without change, except
+	memory mapping from virtual address to physical.</font></font></span></font></p>
+</li></ul>
+<h4 class="cjk"><font face="Tahoma"><span lang="en-US">The First
+Compile Guide</span></font></h4>
+<p><font face="Tahoma"><font size="2"><span lang="en-US">If you decided
+to set up an uClinux development environment, this is the list that
+you have to grab on your linux host:</span></font></font></p>
+<ul>
+	<li><p> <font face="Times New Roman, serif"><span lang="en-US"><font size="2"><font face="Tahoma"><b>uClinux
+	distribution</b><br>The easiest way to get started with uClinux is
+	to play with a copy of uClinux-dist from the uClinux.org site
+	at:<br><a href="http://www.uclinux.org/pub/uClinux/dist/">http://www.uclinux.org/pub/uClinux/dist/<br></a>Note
+	that the kernel version in the distribution may not be the latest.
+	You'll be able to gather the latest patch set and the vanilla Linux
+	kernel from the kernel.org to make a latest copy of uClinux
+	kernel.<br>At this time (20040427), the latest distribution is
+	&#8220;<a href="http://www.uclinux.org/pub/uClinux/dist/uClinux-dist-20040408.tar.gz">http://www.uclinux.org/pub/uClinux/dist/uClinux-dist-20040408.tar.gz</a>&#8221;.
+	If you have some strange trouble with compilation, even after
+	following this guide, simply use this distribution for your testing,
+	and update later. :-)</font></font></span></font></p>
+	</li><li><p> <font face="Times New Roman, serif"><span lang="en-US"><font size="2"><font face="Tahoma"><b>the
+	Kernel and patch</b><br>You could find the latest uClinux/ARM kernel
+	patch at:<br><a href="http://opensrc.sec.samsung.com/">http://opensrc.sec.samsung.com/</a><a href="http://adam.kaist.ac.kr/%7Ehschoe/"><br></a>At
+	the download section, you'll find the link of latest
+	&#8220;linux-2.6.<font color="#808080">x</font>-hsc<font color="#808080">x</font>.patch.gz&#8221;
+	and the original kernel package
+	like:<br><a href="http://adam.kaist.ac.kr/%7Ehschoe/download/linux-2.6.5-hsc2.patch.gz">http://opensrc.sec.samsung.com/download/linux-2.6.5-hsc2.patch.gz<br></a>and<br><a href="http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.5.tar.bz2">http://www.kernel.org/pub/linux/kernel/v2.6/linux-2.6.5.tar.bz2</a>
+	</font></font></span></font>
+	</p>
+	</li><li><p> <font face="Times New Roman, serif"><span lang="en-US"><font size="2"><font face="Tahoma"><b>ARM-ELF
+	toolchain</b><br>Since the Linux 2.6 kernel code uses some of the
+	new features from newer binutils, you need a newer ARM-ELF toolchain
+	for kernel compilation than the one of uclinux.org. You could find
+	the latest toolchain at the same place with the kernel and patch
+	download section above, and the direct url at current time is
+	:<br><a href="http://opensrc.sec.samsung.com/download/arm-elf-tools-20040427.sh">http://opensrc.sec.samsung.com/download/arm-elf-tools-20040427.sh</a></font></font></span></font></p>
+	</li><li><p> <font face="Times New Roman, serif"><span lang="en-US"><font size="2"><font face="Tahoma"><b>Hardware
+	Platform or an ARMulator</b><br>Of course, you need a platform to
+	run the kernel on. Please refer the notice section which platform is
+	supported. Even if you can not find the one that you have, or if you
+	don't have any hardware platform, you can run a complete kernel on
+	your Linux PC! : the ARMulator.<br>The ARMulator is a GDB based
+	emulator which emulates full Atmel AT91x, arm7tdmi EB01. The url of
+	ARMulator home is
+	:<br><a href="http://www.uclinux.org/pub/uClinux/utilities/armulator/">http://www.uclinux.org/pub/uClinux/utilities/armulator/<br></a>You
+	can download directly at this
+	urls:<br><a href="http://www.uclinux.org/pub/uClinux/utilities/armulator/gdb-5.0.tar.bz2">http://www.uclinux.org/pub/uClinux/utilities/armulator/gdb-5.0.tar.bz2</a>
+	(the original gdb-5.0
+	archive)<br><a href="http://www.uclinux.org/pub/uClinux/utilities/armulator/gdb-5.0-uclinux-armulator-20021127.patch.gz">http://www.uclinux.org/pub/uClinux/utilities/armulator/gdb-5.0-uclinux-armulator-20021127.patch.gz</a>
+	(Patches against gdb-5.0)</font></font></span></font></p>
+</li></ul>
+<p style="margin-left: 1.27cm"><font face="Times New Roman, serif"><span lang="en-US"><font size="2"><font face="Tahoma">And
+another patch if you want to run the kernel with ramdisk on the
+ARMulator
+:<br><a href="http://opensrc.sec.samsung.com/download/gdb-5.0-uclinux-armulator-ramdisk-20040412.patch.gz">http://opensrc.sec.samsung.com/download/gdb-5.0-uclinux-armulator-ramdisk-20040412.patch.gz</a></font></font></span></font></p>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">That's
+all for your first compilation.<br><br>Okay, here we go step by
+step.<br>(This guide is assuming that the downloaded files are
+located at ~/incoming and the ARMulator is used for platform to run
+on.)</span></font></font></p>
+<ol>
+	<li><p> <font face="Times New Roman, serif"><span lang="en-US"><b><font size="2"><font face="Tahoma">Install
+	the toolchain</font></font></b></span></font></p>
+</li></ol>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">su
+to log in as the root then execute the arm-elf-tools-20040427.sh
+like:</span></font></font></p>
+<p style="margin-left: 1.27cm"><font color="#94006b"><font face="Tahoma"><font size="2"><span lang="en-US">[root@hyoklinux
+/]# /bin/sh ~/incoming/arm-elf-tools-20040427.sh</span></font></font></font></p>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">You
+should see the list of files that is installed. The toolchain
+binaries for execution are installed to /usr/local/bin. So you need
+the directory to be included in your search path, usually it is
+default for common Linux distribution like Redhat.</span></font></font></p>
+<ol start="2">
+	<li><p> <font face="Times New Roman, serif"><span lang="en-US"><b><font size="2"><font face="Tahoma">Untar
+	the uClinux distribution</font></font></b></span></font></p>
+</li></ol>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">On
+a directory which has enough free available space(about 2GB?), untar
+the uclinux distribution :<br><font color="#94006b">[root@hyoklinux
+/]# tar -zxvf ~/incoming/uClinux-dist-20040408.tar.gz</font></span></font></font></p>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">Let's
+look around what we have on the uClinux-dist directory:</span></font></font></p>
+<p class="msonormal" style="margin-left: 1.27cm; margin-bottom: 0.5cm">
+<font face="Times New Roman, serif"><span lang="en-US"><font size="2"><font face="Tahoma"><font color="#94006b">[root@hyoklinux
+/]# cd uClinux-dist/</font></font></font> </span></font>
+</p>
+<p class="msonormal" style="margin-left: 1.27cm; margin-bottom: 0.5cm">
+<font face="Times New Roman, serif"><span lang="en-US"><font size="2"><font face="Tahoma"><font color="#94006b">[root@hyoklinux
+uClinux-dist]# ls -al</font></font></font> </span></font>
+</p>
+<pre style="margin-left: 2cm; text-align: left"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">total 104 </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">drwxr-xr-x 15 1000 users 4096 Apr 8 09:27 . </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">drwxr-xr-x 28 root root 4096 Apr 27 20:32 .. </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">-rw-r--r-- 1 1000 users 18007 Apr 8 09:13 COPYING </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">drwxr-xr-x 3 1000 users 4096 Apr 8 09:13 Documentation </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">-rw-r--r-- 1 1000 users 9305 Apr 8 09:13 Makefile </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">-rw-r--r-- 1 1000 users 4934 Apr 8 09:13 README </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">-rw-r--r-- 1 1000 users 1743 Apr 8 09:13 SOURCE </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">drwxr-xr-x 2 1000 users 4096 Apr 15 15:19 bin </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">drwxr-xr-x 3 1000 users 4096 Apr 8 09:27 config <b>&lt;-- the configuration files for userland and etc.</b> </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">drwxr-xr-x 11 1000 users 4096 Apr 8 09:27 freeswan <b>&lt;-- IPsec implementation</b> </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">drwxr-xr-x 68 1000 users 4096 Apr 8 09:23 glibc <b>&lt;-- Yes, the GNU C library.</b> </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">drwxr-xr-x 18 1000 users 4096 Apr 8 09:28 lib <b>&lt;-- many libraries ported to uClinux include uC-libc.</b> </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">drwxr-xr-x 15 1000 users 4096 Apr 8 09:27 linux-2.0.x <b>&lt;-- uClinux 2.0.x kernel</b> </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">drwxr-xr-x 16 1000 users 4096 Apr 8 09:27 linux-2.4.x <b>&lt;-- uClinux 2.4.x kernel</b> </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">drwxr-xr-x 18 1000 users 4096 Apr 8 09:27 linux-2.6.x <b>&lt;-- uClinux 2.6.x kernel</b> </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">drwxr-xr-x 3 1000 users 4096 Apr 8 09:26 tools <b>&lt;-- utilities for romfs install and etc.</b> </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">drwxr-xr-x 17 1000 users 4096 Apr 8 09:27 uClibc <b>&lt;-- the uClibc, from uclibc.org. Differ to uC-libc.</b> </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">drwxr-xr-x 174 1000 users 4096 Apr 8 09:27 user <b>&lt;-- the &#8220;userland&#8221;. The applications that is ported.</b> </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">drwxr-xr-x 44 1000 users 4096 Apr 8 09:27 vendors <b>&lt;-- the configuration files for each vendor/models.</b></font></font></code></span>
+</pre>
+<ol start="3">
+	<li><p> <font face="Times New Roman, serif"><span lang="en-US"><b><font size="2"><font face="Tahoma">Make
+	a new linux-2.6.x kernel from the scratch</font></font></b></span></font></p>
+</li></ol>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">The
+kernel version of linux-2.6.x directory in the 20040408 distribution
+is &#8220;linux-2.6.2-uc0&#8221;. We need another kernel with newer
+kernel version for uClinux/ARM 2.6, here.</span></font></font></p>
+<p style="margin-left: 1.27cm"><font color="#94006b"><font face="Tahoma"><font size="2"><span lang="en-US">[root@hyoklinux
+uClinux-dist]# tar -jxvf ~/incoming/linux-2.6.5.tar.bz2</span></font></font></font></p>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">Now
+we got the whole linux-2.6.5 codes, and need to patch the kernel.</span></font></font></p>
+<p style="margin-left: 1.27cm"><font color="#94006b"><font face="Tahoma"><font size="2"><span lang="en-US">[root@hyoklinux
+uClinux-dist]# gzip -dc ~/incoming/linux-2.6.5-hsc2.patch.gz | patch
+-p0</span></font></font></font></p>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">You
+should see the codes patched in directories that contain &#8220;armnommu&#8221;
+string. You can use the directory name &#8220;linux-2.6.5&#8221; for
+your uClinux 2.6 kernel directory without further modification.
+However, I recommend using the kernel directory name to &#8220;linux-2.6.x&#8221;
+because it is more convenient.<br>So you don't need the linux-2.6.x
+directory which is included in the uClinux-dist. :</span></font></font></p>
+<p style="margin-left: 1.27cm"><font color="#94006b"><font face="Tahoma"><font size="2"><span lang="en-US">[root@hyoklinux
+uClinux-dist]# rm -rf linux-2.6.x/</span></font></font></font></p>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">And
+we rename the newer patched kernel directory to &#8220;linux-2.6.x&#8221;.</span></font></font></p>
+<p style="margin-left: 1.27cm"><font color="#94006b"><font face="Tahoma"><font size="2"><span lang="en-US">[root@hyoklinux
+uClinux-dist]# mv linux-2.6.5 linux-2.6.x</span></font></font></font></p>
+<ol start="4">
+	<li><p> <font face="Times New Roman, serif"><span lang="en-US"><b><font size="2"><font face="Tahoma">Confirm
+	the configuration files</font></font></b></span></font></p>
+</li></ol>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">The
+current uClinux distribution does not contain the proper
+configuration files for uClinux/ARM 2.6. We need a simple fix-up. The
+default configuration for ARMulator is at vendors/GDB/ARMulator. We
+can fix-up the configuration files like this :</span></font></font></p>
+<p style="margin-left: 1.27cm"><font color="#94006b"><font face="Tahoma"><font size="2"><span lang="en-US">[root@hyoklinux
+uClinux-dist]# cp
+linux-2.6.x/arch/armnommu/configs/GDB_ARMulator_defconfig
+vendors/GDB/ARMulator/config.linux-2.6.x</span></font></font></font></p>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">Since
+we'll use a ramdisk for the rootfs, we need to fix the &#8220;rc&#8221;
+in the configuration directory to use ramdisk device number 1.</span></font></font></p>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">Edit
+the vendors/GDB/ARMulator/rc to just like :</span></font></font></p>
+<p style="margin-left: 1.27cm"><font color="#94006b"><font face="Tahoma"><font size="2"><span lang="en-US">[root@hyoklinux
+uClinux-dist]# vim vendors/GDB/ARMulator/rc</span></font></font></font></p>
+<pre style="margin-left: 2cm"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">hostname GDB-ARMulator </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">/bin/expand /etc/ramfs.img /dev/ram<font color="#94006b">1</font> </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">mount -t proc proc /proc </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">mount -t ext2 /dev/ram<font color="#94006b">1</font> /var </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">mkdir /var/tmp </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">mkdir /var/log </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">mkdir /var/run </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">mkdir /var/lock </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">mkdir /var/empty </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">cat /etc/motd</font></font></code></span>
+</pre>
+<ol start="5">
+	<li><p> <font face="Times New Roman, serif"><span lang="en-US"><b><font size="2"><font face="Tahoma">Distribution
+	Configuration</font></font></b></span></font></p>
+</li></ol>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">We
+need to configure compilation options for kernel and user
+applications.</span></font></font></p>
+<p style="margin-left: 1.27cm"><font color="#94006b"><font face="Tahoma"><font size="2"><span lang="en-US">[root@hyoklinux
+uClinux-dist]# make menuconfig</span></font></font></font></p>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">At
+the first Main Menu, Select the &#8220;<font color="#94006b">Vendor/Product
+Selection</font>&#8221;.<br>And Select <font color="#94006b">&#8220;GDB&#8221;</font>
+for the &#8220;Vendor&#8221;, and <font color="#94006b">&#8220;ARMulator&#8221;</font>
+for the &#8220;GDB Products&#8221; like :</span></font></font></p>
+<pre style="margin-left: 2cm"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">--- Select the Vendor you wish to target </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">(GDB) Vendor </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">--- Select the Product you wish to target </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">(ARMulator) GDB Products</font></font></code></span>
+</pre><p style="margin-left: 1.27cm">
+<font face="Tahoma"><font size="2"><span lang="en-US">You can go back
+to main menu with 'esc' key or &#8220;Exit&#8221; button.</span></font></font></p>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">At
+the Main Menu, Select the &#8220;<font color="#94006b">Kernel/Library/Defaults
+Selection</font>&#8221;.<br>And Select <font color="#94006b">&#8220;linux-2.6.x&#8221;</font>
+for the &#8220;Kernel Version&#8221;, and <font color="#94006b">&#8220;uClibc&#8221;</font>
+for the &#8220;Libc version&#8221;.<br>And toggle the whole below
+menus :</span></font></font></p>
+<pre style="margin-left: 2cm"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">(linux-2.6.x) Kernel Version </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">(uClibc) Libc Version </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">[*] Default all settings (lose changes) (NEW) </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">[*] Customize Kernel Settings (NEW) </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">[*] Customize Vendor/User Settings (NEW) </font></font></code></span>
+<span lang="en-US"><code><font size="2"><font face="Courier New, monospace">[*] Update Default Vendor Settings (NEW) </font></font></code></span>
+<a name="DDE_LINK1"></a><span lang="en-US"><br>You can go back to main menu with 'esc' key or &#8220;Exit&#8221; button.</span></pre><p style="margin-left: 1.27cm">
+<font face="Tahoma"><font size="2"><span lang="en-US">With the first
+&#8220;default all settings&#8221;, the configuration files in the
+vendors directory is loaded. And with the second &#8220;Customize
+kernel settings&#8221;, we can edit the kernel configuration. The
+third &#8220;Customize Vendor/User settings&#8221; is for
+configuration of applications and libraries configuration for making
+the romfs.img which will be the rootfs of the kernel. With the final
+&#8220;Update Default Vendor settings&#8221;, your changes on the
+kernel and user application configuration will be saved on the
+vendors/product directory.</span></font></font></p>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">You
+can go back to main menu with 'esc' key or &#8220;Exit&#8221; button,
+and do it again for save dialog. <b>And save it!</b></span></font></font></p>
+<ol start="6">
+	<li><p> <font face="Times New Roman, serif"><span lang="en-US"><b><font size="2"><font face="Tahoma">Kernel
+	Configuration</font></font></b></span></font></p>
+</li></ol>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">If
+you followed the steps in &#8220;confirm the configuration files&#8221;
+above, your kernel should have been configured.</span></font></font></p>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">However,
+we need to change the initial ramdisk size. Because the romfs.img
+size with the default applications are about 771KB. In &#8220;<font color="#94006b">General
+setup</font>&#8221; menu, there is &#8220;<font color="#94006b">Default
+kernel command string</font>&#8221;. Change this to:</span></font></font></p>
+<p class="msonormal" style="margin-left: 1.27cm; margin-bottom: 0.5cm">
+<font face="Times New Roman, serif"><span lang="en-US"><font size="2"><font face="Lucida Console">root=/dev/ram0
+initrd=0x01300000,<font color="#94006b">800K</font> keepinitrd</font></font>
+</span></font>
+</p>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">You
+can go back to main menu with 'esc' key or &#8220;Exit&#8221; button,
+and do again for save dialog. <b>And save it!</b></span></font></font></p>
+<ol start="7">
+	<li><p> <font face="Times New Roman, serif"><span lang="en-US"><b><font size="2"><font face="Tahoma">Application/library
+	Configuration</font></font></b></span></font></p>
+</li></ol>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">On
+this menu, we don't need fix anything for now.</span></font></font></p>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">Look
+around the configurations and simply &#8220;exit&#8221; and save.</span></font></font></p>
+<ol start="8">
+	<li><p> <font face="Times New Roman, serif"><span lang="en-US"><b><font size="2"><font face="Tahoma">Make</font></font></b></span></font></p>
+</li></ol>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">We
+are ready to make the whole bunch. Simply type:</span></font></font></p>
+<p style="margin-left: 1.27cm"><font color="#94006b"><font face="Tahoma"><font size="2"><span lang="en-US">[root@hyoklinux
+uClinux-dist]# make</span></font></font></font></p>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">For
+linux-2.4.x, you should do &#8220;make dep&#8221; before &#8220;make&#8221;.
+But with linux-2.6.x, you don't need to.</span></font></font></p>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">It
+will compile the whole kernel and uclibc, user applications, and make
+the romfs.img.</span></font></font></p>
+<ol start="9">
+	<li><p> <font face="Times New Roman, serif"><span lang="en-US"><b><font size="2"><font face="Tahoma">The
+	results</font></font></b></span></font></p>
+</li></ol>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">You
+should get the files in the image directory like:</span></font></font></p>
+<p style="margin-left: 1.27cm"><font color="#94006b"><font face="Tahoma"><font size="2"><span lang="en-US">[root@hyoklinux
+uClinux-dist]# ls -al images</span></font></font></font></p>
+<pre style="margin-left: 2cm"><font face="Courier New, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">total 3036 </font></font></code></span></font>
+<font face="Courier New, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">drwxr-xr-x 2 root root 4096 Apr 27 22:13 . </font></font></code></span></font>
+<font face="Courier New, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">drwxr-xr-x 17 1000 users 4096 Apr 27 22:13 .. </font></font></code></span></font>
+<font face="Courier New, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">-rw-r--r-- 1 root root 1540272 Apr 27 22:13 image.bin </font></font></code></span></font>
+<font face="Courier New, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">-rwxr-xr-x 1 root root 45912 Apr 27 22:13 linux.data </font></font></code></span></font>
+<font face="Courier New, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">-rwxr-xr-x 1 root root 704856 Apr 27 22:13 linux.text </font></font></code></span></font>
+<font face="Courier New, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">-rw-r--r-- 1 root root 789504 Apr 27 22:13 romfs.img</font></font></code></span></font>
+</pre><p style="margin-left: 1.27cm">
+<font face="Tahoma"><font size="2"><span lang="en-US">[root@hyoklinux
+uClinux-dist]# ls -al linux-2.6.x/linux</span></font></font></p>
+<p class="text-body-indent" style="margin-left: 2cm"><font face="Courier New, monospace"><span lang="en-US"><code><font size="2">-rwxr-xr-x
+2 root root 15499433 Apr 27 22:11 linux-2.6.x/linux</font></code></span></font></p>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">If
+you see all the files, you've the whole kernel and rootfs image.</span></font></font></p>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">Let's
+play with it with ARMulator!</span></font></font></p>
+<ol start="10">
+	<li><p> <font face="Times New Roman, serif"><span lang="en-US"><b><font size="2"><font face="Tahoma">ARMulator
+	installation</font></font></b></span></font></p>
+</li></ol>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">We
+need another directory to compile the GDB/ARMulator. However, this
+time, I'll install it in the uClinux-dist directory for temporary
+usage.</span></font></font></p>
+<p style="margin-left: 1.27cm"><font color="#94006b"><font face="Tahoma"><font size="2"><span lang="en-US">[root@hyoklinux
+uClinux-dist]# tar -jxvf ~/incoming/gdb-5.0.tar.bz2</span></font></font></font></p>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">And
+patch it!</span></font></font></p>
+<p style="margin-left: 1.27cm"><font color="#94006b"><font face="Tahoma"><font size="2"><span lang="en-US">[root@hyoklinux
+uClinux-dist]# gzip -dc
+~/incoming/gdb-5.0-uclinux-armulator-20021127.patch.gz | patch -p0</span></font></font></font></p>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">And
+another one.</span></font></font></p>
+<p style="margin-left: 1.27cm"><font color="#94006b"><font face="Tahoma"><font size="2"><span lang="en-US">[root@hyoklinux
+uClinux-dist]# gzip -dc
+~/incoming/gdb-5.0-uclinux-armulator-ramdisk-20040412.patch.gz |
+patch -p0</span></font></font></font></p>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">Okay,
+the codes are ready for compilation. Let's make it.</span></font></font></p>
+<p style="margin-left: 1.27cm"><font face="Times New Roman, serif"><span lang="en-US"><font size="2"><font face="Tahoma"><font color="#94006b">[root@hyoklinux
+uClinux-dist]# cd gdb-5.0/<br>[root@hyoklinux gdb-5.0]# ./configure
+&#8211;target=arm-elf<br>[root@hyoklinux gdb-5.0]#
+make<br>[root@hyoklinux gdb-5.0]# make install</font></font></font>
+<font size="2"><font face="Tahoma">(be the root before this)</font></font></span></font></p>
+<ol start="11">
+	<li><p> <font face="Times New Roman, serif"><span lang="en-US"><b><font size="2"><font face="Tahoma">Running
+	the ARMulator</font></font></b></span></font></p>
+</li></ol>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">Before
+run the ARMulator, we need a symbolic link to the rootfs image,
+&#8220;romfs.img&#8221;.</span></font></font></p>
+<p style="margin-left: 1.27cm"><a name="DDE_LINK4"></a><font color="#94006b"><font face="Tahoma"><font size="2"><span lang="en-US">[root@hyoklinux
+gdb-5.0]# cd ..<br>[root@hyoklinux uClinux-dist]# ln -s
+images/romfs.img boot.rom</span></font></font></font></p>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">And
+if we make this initial script for GDB, it's convenient.</span></font></font></p>
+<p style="margin-left: 1.27cm"><font face="Times New Roman, serif"><span lang="en-US"><font size="2"><font face="Tahoma"><font color="#94006b">[root@hyoklinux
+uClinux-dist]# cat &gt; .gdbinit<br>target sim<br>load</font><br><font color="#5e11a6">^D</font></font></font></span></font></p>
+<p style="margin-left: 1.27cm"><font face="Tahoma"><font size="2"><span lang="en-US">That's
+all for our first kernel running. Let's do it!</span></font></font></p>
+<p style="margin-left: 1.27cm"><font color="#94006b"><font face="Tahoma"><font size="2"><span lang="en-US">[root@hyoklinux
+uClinux-dist]# arm-elf-gdb linux-2.6.x/linux</span></font></font></font></p>
+<pre style="margin-left: 2cm"><font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">GNU gdb 5.0 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Copyright 2000 Free Software Foundation, Inc. </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">GDB is free software, covered by the GNU General Public License, and you are </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">welcome to change it and/or distribute copies of it under certain conditions. </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Type "show copying" to see the conditions. </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">There is absolutely no warranty for GDB. Type "show warranty" for details. </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">This GDB was configured as "--host=i686-pc-linux-gnu --target=arm-elf"... </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Loaded ROM boot.rom to 0x01300000 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Loaded ROM boot.rom to 0x01400000 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Loaded ROM boot.rom to 0x04000000 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Loaded ROM boot.rom to 0x01300000 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Loaded ROM boot.rom to 0x01400000 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Loaded ROM boot.rom to 0x04000000 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Connected to the simulator. </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Loading section .init, size 0xb000 vma 0x1000000 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Loading section .text, size 0xa0b98 vma 0x100b000 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Loading section __ex_table, size 0x5b8 vma 0x10abba0 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Loading section .data, size 0x8ef8 vma 0x10ae000 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Start address 0x1000000 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Transfer rate: 5931584 bits in &lt;1 sec. </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">(gdb) run </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Starting program: /uClinux-dist/linux-2.6.x/linux </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Linux version 2.6.5-hsc1 (root@hyoklinux) (gcc version 2.95.3 20010315 (release)(ColdFire patches - 20010318 from http://fiddes.net/coldfire/)(uClinux XIP and shared lib patches from http://www.snapgear.com/)) #9 Mon May 3 11:00:29 KST 2004 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">CPU: Atmel-AT91M40xxx [14000040] revision 0 (ARMvundefined/unknown) </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Machine: ATMEL EB01 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">On node 0 totalpages: 1024 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">DMA zone: 0 pages, LIFO batch:1 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Normal zone: 1024 pages, LIFO batch:1 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">HighMem zone: 0 pages, LIFO batch:1 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Built 1 zonelists </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Kernel command line: root=/dev/ram0 initrd=0x01300000,800K keepinitrd </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">PID hash table entries: 32 (order 5: 256 bytes) </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Memory: 4MB = 4MB total </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Memory: 2448KB available (642K code, 92K data, 44K init) </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Calibrating delay loop... 15.87 BogoMIPS </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Dentry cache hash table entries: 1024 (order: 0, 4096 bytes) </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Inode-cache hash table entries: 1024 (order: 0, 4096 bytes) </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Mount-cache hash table entries: 512 (order: 0, 4096 bytes) </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">checking if image is initramfs...it isn't (ungzip failed); looks like an initrd </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">POSIX conformance testing by UNIFIX </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Linux NoNET1.0 for Linux 2.6 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Atmel USART driver version 0.99 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">ttyS0 at 0xfffd0000 (irq = 2) is a builtin Atmel APB USART </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">ttyS1 at 0xfffcc000 (irq = 3) is a builtin Atmel APB USART </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">RAMDISK driver initialized: 16 RAM disks of 4096K size 1024 blocksize </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">loop: loaded (max 8 devices) </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">RAMDISK: romfs filesystem found at block 0 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">RAMDISK: Loading 771 blocks [1 disk] into ram disk... done. </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">VFS: Mounted root (romfs filesystem) readonly. </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Freeing init memory: 44K </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Shell invoked to run file: /etc/rc </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Command: hostname GDB-ARMulator </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Command: /bin/expand /etc/ramfs.img /dev/ram1 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Command: mount -t proc proc /proc </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Command: mount -t ext2 /dev/ram1 /var </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Command: mkdir /var/tmp </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Command: mkdir /var/log </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Command: mkdir /var/run </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Command: mkdir /var/lock </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Command: mkdir /var/empty </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Command: cat /etc/motd </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Welcome to </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">____ _ _ </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">/ __| ||_| </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">_ _| | | | _ ____ _ _ _ _ </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">| | | | | | || | _ \| | | |\ \/ / </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">| |_| | |__| || | | | | |_| |/ \ </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">| ___\____|_||_|_| |_|\____|\_/\_/ </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">| | </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">|_| </font></font></code></span></font>
+<code>&nbsp;</code>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">GDB/ARMulator support by &lt;davidm@snapgear.com&gt; </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">For further information check: </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">http://www.uclinux.org/ </font></font></code></span></font>
+<code>&nbsp;</code>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Execution Finished, Exiting </font></font></code></span></font>
+<code>&nbsp;</code>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Sash command shell (version 1.1.1) </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">/&gt; ps </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">PID PORT STAT SIZE SHARED %CPU COMMAND </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">1 S 163K 0K 48.0 /sbin/init </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">2 S 0K 0K 0.0 ksoftirqd/0 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">3 S 0K 0K 1.0 events/0 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">4 S 0K 0K 0.0 kblockd/0 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">5 S 0K 0K 0.0 pdflush </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">6 S 0K 0K 0.0 pdflush </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">7 S 0K 0K 0.0 kswapd0 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">8 S 0K 0K 0.0 aio/0 </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">11 S0 R 165K 0K 0.0 /bin/sh </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">/&gt; cd bin </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">/bin&gt; ls -al </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">drwxr-xr-x 1 0 0 32 Jan 1 00:00 . </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">drwxr-xr-x 1 0 0 32 Jan 1 00:00 .. </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">-rwxr-xr-x 1 0 0 105980 Jan 1 00:00 boa </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">-rwxr-xr-x 1 0 0 91104 Jan 1 00:00 dhcpcd </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">-rwxr-xr-x 1 0 0 29624 Jan 1 00:00 expand </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">-rwxr-xr-x 1 0 0 40504 Jan 1 00:00 gdbserver </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">-rwxr-xr-x 1 0 0 73748 Jan 1 00:00 ifconfig </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">-rwxr-xr-x 1 0 0 41144 Jan 1 00:00 inetd </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">-rwxr-xr-x 1 0 0 31176 Jan 1 00:00 init </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">-rwxr-xr-x 1 0 0 56380 Jan 1 00:00 login </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">-rwxr-xr-x 1 0 0 64656 Jan 1 00:00 ping </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">-rwxr-xr-x 1 0 0 34280 Jan 1 00:00 reboot </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">-rwxr-xr-x 1 0 0 73860 Jan 1 00:00 route </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">-rwxr-xr-x 1 0 0 79852 Jan 1 00:00 sh </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">-rwxr-xr-x 1 0 0 51216 Jan 1 00:00 telnetd </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">/bin&gt; cat /proc/meminfo </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">MemTotal: 2516 kB </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">MemFree: 560 kB </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Buffers: 900 kB </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Cached: 188 kB </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">SwapCached: 0 kB </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Active: 984 kB </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Inactive: 44 kB </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">HighTotal: 0 kB </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">HighFree: 0 kB </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">LowTotal: 2516 kB </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">LowFree: 560 kB </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">SwapTotal: 0 kB </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">SwapFree: 0 kB </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Dirty: 0 kB </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Writeback: 0 kB </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Mapped: 0 kB </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Slab: 752 kB </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">Committed_AS: 0 kB </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">PageTables: 0 kB </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">VmallocTotal: 4194303 kB </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">VmallocUsed: 0 kB </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">VmallocChunk: 4194303 kB </font></font></code></span></font>
+<font face="Lucida Console, monospace"><span lang="en-US"><code><font size="2"><font face="Courier New, monospace">/bin&gt;</font></font></code></span></font></pre>
+
+</body></html>
