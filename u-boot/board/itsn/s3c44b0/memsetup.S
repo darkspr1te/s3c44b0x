@@ -87,6 +87,17 @@
 .equ    Tchr,       0x0 /* 0x2=3clk 0x0=0clks  */
 .equ    REFCNT,       1550
 
+/* MEMORY_CONFIG第一个值是BWSCON寄存器，各位表示的情况如下:
+  [0    ]   : 0 表示 LITTLE ENDIAN, 1 表示BIG ENDIAN 
+  [1 - 2]   : 表示blank 0 数据总线宽度 00:8-bit 01:16-bit 10:32-bit
+  [4 - 5]   : 表示blank 1 数据总线宽度
+  [6    ]   : 表示blank 1 wait开关, 0:WAIT disable  1:WAIT enable
+  [7    ]   : 表示blank 1 是否使用 UB/LB, 0:not using UB/LB, 1:using UB/LB
+  [8 - 9]   : 表示blank 2 数据总线宽度
+  [10   ]   : 表示blank 2 wait开关
+  [11   ]   : 表示blank 1 是否使用 UB/LB
+  ........
+ */
 MEMORY_CONFIG:
   .long   0x01001102 /* Bank0 = OM[1:0] , Bank1-7 16bit, Bank2=Nowait,UB/LB*/
   .word ((B0_Tacs<<13)+(B0_Tcos<<11)+(B0_Tacc<<8)+(B0_Tcoh<<6)+(B0_Tah<<4)+(B0_Tacp<<2)+(B0_PMC)) /*GCS0*/

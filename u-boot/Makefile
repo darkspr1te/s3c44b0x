@@ -126,7 +126,6 @@ PLATFORM_LIBS += --no-warn-mismatch -L $(shell dirname `$(CC) $(CFLAGS) -print-l
 # The "tools" are needed early, so put this first
 # Don't include stuff already done in $(LIBS)
 SUBDIRS	= tools \
-	  examples \
 	  post \
 	  post/cpu
 .PHONY : $(SUBDIRS)
