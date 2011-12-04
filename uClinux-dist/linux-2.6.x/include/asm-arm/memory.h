@@ -2,6 +2,7 @@
  *  linux/include/asm-arm/memory.h
  *
  *  Copyright (C) 2000-2002 Russell King
+ *  Copyright (C) 2003 Hyok S. Choi
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -16,6 +17,7 @@
 #include <linux/compiler.h>
 #include <asm/arch/memory.h>
 
+#ifdef CONFIG_MMU
 #ifndef TASK_SIZE
 /*
  * TASK_SIZE - the maximum size of a user space task.
@@ -37,6 +39,33 @@
 #define PAGE_OFFSET		(0xc0000000UL)
 #endif
 
+#else /* CONFIG_MMU */
+
+#ifndef TASK_SIZE
+#define TASK_SIZE		(0x01a00000UL)
+#endif
+#ifndef TASK_UNMAPPED_BASE
+#define TASK_UNMAPPED_BASE	(0x00000000UL)
+#endif
+
+#define TASK_SIZE_26		TASK_SIZE
+
+#ifndef PHYS_OFFSET
+#ifndef CONFIG_DRAM_BASE
+#define PHYS_OFFSET		(0x00000000UL)
+#define END_MEM			(0x00400000UL)
+#else
+#define PHYS_OFFSET 		(CONFIG_DRAM_BASE)
+#define END_MEM     		(CONFIG_DRAM_BASE + CONFIG_DRAM_SIZE)
+#endif
+#endif
+
+#ifndef PAGE_OFFSET
+#define PAGE_OFFSET		(PHYS_OFFSET)
+#endif
+
+#endif /* !CONFIG_MMU */
+
 /*
  * Physical vs virtual RAM address space conversion.  These are
  * private definitions which should NOT be used outside memory.h
@@ -46,6 +75,8 @@
 #define __virt_to_phys(x)	((x) - PAGE_OFFSET + PHYS_OFFSET)
 #define __phys_to_virt(x)	((x) - PHYS_OFFSET + PAGE_OFFSET)
 #endif
+
+#ifdef CONFIG_MMU
 
 /*
  * The module space lives between the addresses given by TASK_SIZE
@@ -57,6 +88,8 @@
 #if TASK_SIZE > MODULE_START
 #error Top of user space clashes with start of module space
 #endif
+
+#endif /* CONFIG_MMU */
 
 #ifndef __ASSEMBLY__
 

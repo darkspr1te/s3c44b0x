@@ -2,6 +2,7 @@
  *  linux/include/asm-arm/processor.h
  *
  *  Copyright (C) 1995-1999 Russell King
+ *  Copyright (C) 2003 Hyok S. Choi, Samsung Electronics Co.,Ltd.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -49,6 +50,12 @@ struct thread_struct {
 
 #define INIT_THREAD  {	}
 
+#ifndef CONFIG_MMU
+#define UCLINUX_SET_REG(r,a)	do { r = a; } while (0)
+#else
+#define UCLINUX_SET_REG(r,a)	((void) 0)
+#endif
+
 #define start_thread(regs,pc,sp)					\
 ({									\
 	unsigned long *stack = (unsigned long *)sp;			\
@@ -65,6 +72,7 @@ struct thread_struct {
 	regs->ARM_r2 = stack[2];	/* r2 (envp) */			\
 	regs->ARM_r1 = stack[1];	/* r1 (argv) */			\
 	regs->ARM_r0 = stack[0];	/* r0 (argc) */			\
+	UCLINUX_SET_REG(regs->ARM_r10, current->mm->start_data);	\
 })
 
 /* Forward declaration, a strange C thing */

@@ -297,6 +297,13 @@ struct mtd_info *cfi_cmdset_0002(struct map_info *map, int primary)
 			cfi->addr_unlock1 = 0xaaa;
 			cfi->addr_unlock2 = 0x555;
 		}
+		if (cfi->device_type == CFI_DEVICETYPE_X32) {
+			if (map->bankwidth == cfi->interleave)
+				cfi->addr_unlock1 = 0x1555;
+			else
+				cfi->addr_unlock1 = 0x1554;
+			cfi->addr_unlock2 = 0xaaa;
+		}
 
 	} /* CFI mode */
 	else if (cfi->cfi_mode == CFI_MODE_JEDEC) {

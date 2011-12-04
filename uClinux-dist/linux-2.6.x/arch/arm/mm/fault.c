@@ -3,6 +3,7 @@
  *
  *  Copyright (C) 1995  Linus Torvalds
  *  Modifications for ARM processor (c) 1995-2004 Russell King
+ *  Modifications for nommu or non-paged, Hyok S. Choi, 2003
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -22,6 +23,7 @@
 
 #include "fault.h"
 
+#ifdef CONFIG_MMU
 /*
  * This is useful to dump out the page tables associated with
  * 'addr' in mm 'mm'.
@@ -74,6 +76,7 @@ void show_pte(struct mm_struct *mm, unsigned long addr)
 	printk("\n");
 }
 
+#endif /* CONFIG_MMU */
 /*
  * Oops.  The kernel tried to access some page that wasn't present.
  */
@@ -96,7 +99,9 @@ __do_kernel_fault(struct mm_struct *mm, unsigned long addr, unsigned int fsr,
 		(addr < PAGE_SIZE) ? "NULL pointer dereference" :
 		"paging request", addr);
 
+#ifdef CONFIG_MMU
 	show_pte(mm, addr);
+#endif
 	die("Oops", regs, fsr);
 	bust_spinlocks(0);
 	do_exit(SIGKILL);
@@ -117,7 +122,9 @@ __do_user_fault(struct task_struct *tsk, unsigned long addr,
 	if (user_debug & UDBG_SEGV) {
 		printk(KERN_DEBUG "%s: unhandled page fault (%d) at 0x%08lx, code 0x%03x\n",
 		       tsk->comm, sig, addr, fsr);
+#ifdef CONFIG_MMU
 		show_pte(tsk->mm, addr);
+#endif
 		show_regs(regs);
 	}
 #endif
@@ -146,6 +153,7 @@ do_bad_area(struct task_struct *tsk, struct mm_struct *mm, unsigned long addr,
 		__do_kernel_fault(mm, addr, fsr, regs);
 }
 
+#ifdef CONFIG_MMU
 #define VM_FAULT_BADMAP		(-20)
 #define VM_FAULT_BADACCESS	(-21)
 
@@ -215,10 +223,12 @@ check_stack:
 out:
 	return fault;
 }
+#endif /* CONFIG_MMU */
 
 static int
 do_page_fault(unsigned long addr, unsigned int fsr, struct pt_regs *regs)
 {
+#ifdef CONFIG_MMU
 	struct task_struct *tsk;
 	struct mm_struct *mm;
 	int fault, sig, code;
@@ -296,6 +306,10 @@ do_page_fault(unsigned long addr, unsigned int fsr, struct pt_regs *regs)
 
 no_context:
 	__do_kernel_fault(mm, addr, fsr, regs);
+#else /* CONFIG_MMU */
+	printk("do_page_fault? : %s %d\n",__FILE__,__LINE__);
+
+#endif /* !CONFIG_MMU */
 	return 0;
 }
 
@@ -320,6 +334,7 @@ static int
 do_translation_fault(unsigned long addr, unsigned int fsr,
 		     struct pt_regs *regs)
 {
+#ifdef CONFIG_MMU
 	struct task_struct *tsk;
 	unsigned int index;
 	pgd_t *pgd, *pgd_k;
@@ -355,6 +370,9 @@ bad_area:
 	tsk = current;
 
 	do_bad_area(tsk, tsk->active_mm, addr, fsr, regs);
+#else /* CONFIG_MMU */
+	printk("do_translation_fault? : %s %d\n",__FILE__,__LINE__);
+#endif /* !CONFIG_MMU */
 	return 0;
 }
 

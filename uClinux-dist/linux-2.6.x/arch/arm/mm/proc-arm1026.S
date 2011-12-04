@@ -3,6 +3,8 @@
  *
  *  Copyright (C) 2000 ARM Limited
  *  Copyright (C) 2000 Deep Blue Solutions Ltd.
+ *  Copyright (C) 2003 Hyok S. Choi <hyok.choi@samsung.com>
+ *  modified for NON-PAGED MMU version.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -89,7 +91,9 @@ ENTRY(cpu_arm1026_reset)
 	mov	ip, #0
 	mcr	p15, 0, ip, c7, c7, 0		@ invalidate I,D caches
 	mcr	p15, 0, ip, c7, c10, 4		@ drain WB
+#ifdef CONFIG_MMU
 	mcr	p15, 0, ip, c8, c7, 0		@ invalidate I & D TLBs
+#endif
 	mrc	p15, 0, ip, c1, c0, 0		@ ctrl register
 	bic	ip, ip, #0x000f 		@ ............wcam
 	bic	ip, ip, #0x1100 		@ ...i...s........
@@ -326,6 +330,7 @@ ENTRY(cpu_arm1026_dcache_clean_area)
  */
 	.align	5
 ENTRY(cpu_arm1026_switch_mm)
+#ifdef CONFIG_MMU
 	mov	r1, #0
 #ifndef CONFIG_CPU_DCACHE_DISABLE
 1:	mrc	p15, 0, r15, c7, c14, 3		@ test, clean, invalidate
@@ -337,8 +342,10 @@ ENTRY(cpu_arm1026_switch_mm)
 	mcr	p15, 0, r1, c7, c10, 4		@ drain WB
 	mcr	p15, 0, r0, c2, c0, 0		@ load page table pointer
 	mcr	p15, 0, r1, c8, c7, 0		@ invalidate I & D TLBs
+#endif
 	mov	pc, lr
         
+#ifdef CONFIG_MMU
 /*
  * cpu_arm1026_set_pte(ptep, pte)
  *
@@ -374,7 +381,7 @@ ENTRY(cpu_arm1026_set_pte)
 	mcr	p15, 0, r0, c7, c10, 1		@ clean D entry
 #endif
 	mov	pc, lr
-
+#endif /* CONFIG_MMU */
 
 	__INIT
 
@@ -383,8 +390,10 @@ __arm1026_setup:
 	mov	r0, #0
 	mcr	p15, 0, r0, c7, c7		@ invalidate I,D caches on v4
 	mcr	p15, 0, r0, c7, c10, 4		@ drain write buffer on v4
+#ifdef CONFIG_MMU
 	mcr	p15, 0, r0, c8, c7		@ invalidate I,D TLBs on v4
 	mcr	p15, 0, r4, c2, c0		@ load page table pointer
+#endif
 #ifdef CONFIG_CPU_DCACHE_WRITETHROUGH
 	mov	r0, #4				@ explicitly disable writeback
 	mcr	p15, 7, r0, c15, c0, 0
@@ -411,7 +420,11 @@ __arm1026_setup:
 arm1026_cr1_clear:
 	.word	0x7f3f
 arm1026_cr1_set:
+#if defined(CONFIG_MMU) || defined(CONFIG_CPU_MXU_ENABLE)
 	.word	0x3935
+#else
+	.word	0x3934
+#endif
 
 	__INITDATA
 
@@ -428,7 +441,9 @@ arm1026_processor_functions:
 	.word	cpu_arm1026_do_idle
 	.word	cpu_arm1026_dcache_clean_area
 	.word	cpu_arm1026_switch_mm
+#ifdef CONFIG_MMU
 	.word	cpu_arm1026_set_pte
+#endif
 	.size	arm1026_processor_functions, . - arm1026_processor_functions
 
 	.section .rodata
@@ -475,17 +490,21 @@ cpu_arm1026_name:
 __arm1026_proc_info:
 	.long	0x4106a260			@ ARM 1026EJ-S (v5TEJ)
 	.long	0xff0ffff0
+#ifdef CONFIG_MMU
 	.long   PMD_TYPE_SECT | \
 		PMD_BIT4 | \
 		PMD_SECT_AP_WRITE | \
 		PMD_SECT_AP_READ
+#endif
 	b	__arm1026_setup
 	.long	cpu_arch_name
 	.long	cpu_elf_name
 	.long	HWCAP_SWP|HWCAP_HALF|HWCAP_THUMB|HWCAP_FAST_MULT|HWCAP_EDSP|HWCAP_JAVA
 	.long	cpu_arm1026_name
 	.long	arm1026_processor_functions
+#ifdef CONFIG_MMU
 	.long	v4wbi_tlb_fns
 	.long	v4wb_user_fns
+#endif
 	.long	arm1026_cache_fns
 	.size	__arm1026_proc_info, . - __arm1026_proc_info

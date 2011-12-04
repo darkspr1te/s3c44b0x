@@ -2,6 +2,7 @@
  *  linux/arch/arm/mm/proc-v6.S
  *
  *  Copyright (C) 2001 Deep Blue Solutions Ltd.
+ *  Modified by Catalin Marinas for noMMU support
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -110,14 +111,17 @@ ENTRY(cpu_v6_dcache_clean_area)
  *	- we are not using split page tables
  */
 ENTRY(cpu_v6_switch_mm)
+#ifdef CONFIG_MMU
 	mov	r2, #0
 	ldr	r1, [r1, #MM_CONTEXT_ID]	@ get mm->context.id
 	mcr	p15, 0, r2, c7, c5, 6		@ flush BTAC/BTB
 	mcr	p15, 0, r2, c7, c10, 4		@ drain write buffer
 	mcr	p15, 0, r0, c2, c0, 0		@ set TTB 0
 	mcr	p15, 0, r1, c13, c0, 1		@ set context ID
+#endif
 	mov	pc, lr
 
+#ifdef CONFIG_MMU
 /*
  *	cpu_v6_set_pte(ptep, pte)
  *
@@ -165,6 +169,7 @@ ENTRY(cpu_v6_set_pte)
 	str	r2, [r0]
 	mcr	p15, 0, r0, c7, c10, 1 @ flush_pte
 	mov	pc, lr
+#endif
 
 
 
@@ -196,9 +201,11 @@ __v6_setup:
 	mcr	p15, 0, r0, c7, c5, 0		@ invalidate I cache
 	mcr	p15, 0, r0, c7, c15, 0		@ clean+invalidate cache
 	mcr	p15, 0, r0, c7, c10, 4		@ drain write buffer
+#ifdef CONFIG_MMU
 	mcr	p15, 0, r0, c8, c7, 0		@ invalidate I + D TLBs
 	mcr	p15, 0, r0, c2, c0, 2		@ TTB control register
 	mcr	p15, 0, r4, c2, c0, 1		@ load TTB1
+#endif
 #ifdef CONFIG_VFP
 	mrc	p15, 0, r0, c1, c0, 2
 	orr	r0, r0, #(0xf << 20)
@@ -220,9 +227,17 @@ __v6_setup:
 	.type	v6_cr1_clear, #object
 	.type	v6_cr1_set, #object
 v6_cr1_clear:
+#ifdef CONFIG_MMU
 	.word	0x01e0fb7f
+#else
+	.word	0x01bae703
+#endif
 v6_cr1_set:
+#ifdef CONFIG_MMU
 	.word	0x00c0387d
+#else
+	.word	0x0045187c
+#endif
 
 	.type	v6_processor_functions, #object
 ENTRY(v6_processor_functions)
@@ -233,7 +248,9 @@ ENTRY(v6_processor_functions)
 	.word	cpu_v6_do_idle
 	.word	cpu_v6_dcache_clean_area
 	.word	cpu_v6_switch_mm
+#ifdef CONFIG_MMU
 	.word	cpu_v6_set_pte
+#endif
 	.size	v6_processor_functions, . - v6_processor_functions
 
 	.type	cpu_arch_name, #object
@@ -256,18 +273,22 @@ cpu_elf_name:
 __v6_proc_info:
 	.long	0x0007b000
 	.long	0x0007f000
+#ifdef CONFIG_MMU
 	.long   PMD_TYPE_SECT | \
 		PMD_SECT_BUFFERABLE | \
 		PMD_SECT_CACHEABLE | \
 		PMD_SECT_AP_WRITE | \
 		PMD_SECT_AP_READ
+#endif
 	b	__v6_setup
 	.long	cpu_arch_name
 	.long	cpu_elf_name
 	.long	HWCAP_SWP|HWCAP_HALF|HWCAP_THUMB|HWCAP_FAST_MULT|HWCAP_VFP|HWCAP_EDSP|HWCAP_JAVA
 	.long	cpu_v6_name
 	.long	v6_processor_functions
+#ifdef CONFIG_MMU
 	.long	v6wbi_tlb_fns
 	.long	v6_user_fns
+#endif
 	.long	v6_cache_fns
 	.size	__v6_proc_info, . - __v6_proc_info

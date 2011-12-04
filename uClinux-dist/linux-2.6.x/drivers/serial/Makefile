@@ -56,3 +56,7 @@ obj-$(CONFIG_SERIAL_JSM) += jsm/
 obj-$(CONFIG_SERIAL_TXX9) += serial_txx9.o
 obj-$(CONFIG_SERIAL_VR41XX) += vr41xx_siu.o
 obj-$(CONFIG_SERIAL_SGI_IOC4) += ioc4_serial.o
+obj-$(CONFIG_SERIAL_DCC) += dcc.o
+obj-$(CONFIG_SERIAL_ATMEL) += serial_atmel.o
+obj-$(CONFIG_SERIAL_S3C4510B) += serial_s3c4510b.o
+obj-$(CONFIG_SERIAL_P2001_UART) += p2001_uart.o

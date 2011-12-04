@@ -2,6 +2,7 @@
  *  linux/include/asm-arm/procinfo.h
  *
  *  Copyright (C) 1996-1999 Russell King
+ *  Modified by Hyok S. Choi, 2004
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -12,8 +13,10 @@
 
 #ifndef __ASSEMBLY__
 
+#ifdef CONFIG_MMU
 struct cpu_tlb_fns;
 struct cpu_user_fns;
+#endif
 struct cpu_cache_fns;
 struct processor;
 
@@ -29,15 +32,19 @@ struct processor;
 struct proc_info_list {
 	unsigned int		cpu_val;
 	unsigned int		cpu_mask;
+#ifdef CONFIG_MMU
 	unsigned long		__cpu_mmu_flags;	/* used by head.S */
+#endif
 	unsigned long		__cpu_flush;		/* used by head.S */
 	const char		*arch_name;
 	const char		*elf_name;
 	unsigned int		elf_hwcap;
 	const char		*cpu_name;
 	struct processor	*proc;
+#ifdef CONFIG_MMU
 	struct cpu_tlb_fns	*tlb;
 	struct cpu_user_fns	*user;
+#endif
 	struct cpu_cache_fns	*cache;
 };
 
@@ -45,7 +52,11 @@ extern unsigned int elf_hwcap;
 
 #endif	/* __ASSEMBLY__ */
 
+#ifdef CONFIG_MMU
 #define PROC_INFO_SZ	48
+#else
+#define PROC_INFO_SZ	36
+#endif
 
 #define HWCAP_SWP	1
 #define HWCAP_HALF	2

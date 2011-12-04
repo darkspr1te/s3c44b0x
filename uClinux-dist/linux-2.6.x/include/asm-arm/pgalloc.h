@@ -2,6 +2,7 @@
  *  linux/include/asm-arm/pgalloc.h
  *
  *  Copyright (C) 2000-2001 Russell King
+ *  Modified by Hyok S. Choi, 2004
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -14,6 +15,7 @@
 #include <asm/cacheflush.h>
 #include <asm/tlbflush.h>
 
+#ifdef CONFIG_MMU
 /*
  * Since we have only two-level page tables, these are trivial
  */
@@ -27,8 +29,11 @@ extern void free_pgd_slow(pgd_t *pgd);
 #define pgd_alloc(mm)			get_pgd_slow(mm)
 #define pgd_free(pgd)			free_pgd_slow(pgd)
 
+#endif /* CONFIG_MMU */
+
 #define check_pgt_cache()		do { } while (0)
 
+#ifdef CONFIG_MMU
 /*
  * Allocate one PTE table.
  *
@@ -120,5 +125,7 @@ pmd_populate(struct mm_struct *mm, pmd_t *pmdp, struct page *ptep)
 {
 	__pmd_populate(pmdp, page_to_pfn(ptep) << PAGE_SHIFT | _PAGE_USER_TABLE);
 }
+
+#endif /* CONFIG_MMU */
 
 #endif

@@ -13,12 +13,64 @@ config ARM
 	  licensed by ARM ltd and targeted at embedded applications and
 	  handhelds such as the Compaq IPAQ.  ARM-based PCs are no longer
 	  manufactured, but  legacy ARM-based PC hardware remains popular in
-	  Europe.  There is an ARM Linux project with a web page at
+	  Europe.
+
+	  There is an ARM(w/MMU) Linux project with a web page at
 	  <http://www.arm.linux.org.uk/>.
 
+	  There is an ARM(w/o MMU) uClinux project with a web page at
+	  <http://opensrc.sec.samsung.com/>.
+choice    
+        prompt "Memory Management Support"
+	default MMU
+	help
+          The recent cores are designed to address a wide variety of applications.
+          Many cores for application platform have Memory Mangement Unit(MMU),
+          however, other cores for embedded systems, secure application have
+          only MPU or even NONE, although used in many SoCs.
+
+          By merging of uClinux, these type of cores supported as the singular
+          address space memory management. The architectures which have a MPU
+          or even no memory management related unit are supported.
+
 config MMU
-	bool
-	default y
+	bool "MMU"
+	help
+	  It's the traditional "Linux" memory mangement type.
+
+	  Select if you want MMU based virtualized addressing space support
+	  by paged memory management.
+
+	  If you don't know what is uClinux or MPU, simply select this.
+
+config MPU
+	bool "MPU"
+	help
+	  It's one of the "uClinux" memory management type.
+
+	  Some cores of ARM series have a Memory Processing Unit(MPU) which
+	  supports sectioned memory management. e.g. arm940T
+
+	  MPU can be supported as singular addressing space memory management
+	  which is linearly mapped from the physical address space.
+
+	  Refer your platform architecture manual and select this if your core has MPU.
+
+config NO_MU
+	bool "NONE"
+	help
+	  It's very typical memory management type of "uClinux."
+
+	  For example, arm7tdmi based platform has no memory management hardware unit
+	  like MMU or MPU.
+
+	  And for performance issue or somewhat other reasons, this type can be chosen
+	  even for MMU based platforms, too. In this case, the MMU table typically
+	  linearly mapped before the jump to kernel. e.g. S5C7375.
+
+	  It is supported as the singular address space memory management.
+
+endchoice
 
 config EISA
 	bool
@@ -79,7 +131,9 @@ menu "System Type"
 
 choice
 	prompt "ARM system type"
-	default ARCH_RPC
+	default ARCH_RPC if MMU
+	default ARCH_S3C2500 if MPU
+	default ARCH_ATMEL if !MMU && !MPU
 
 config ARCH_CLPS7500
 	bool "Cirrus-CL-PS7500FE"
@@ -207,7 +261,81 @@ config ARCH_AAEC2000
 	help
 	  This enables support for systems based on the Agilent AAEC-2000
 
+config ARCH_S5C7375
+	bool "Samsung S5C7375"
+	select ARM_AMBA
+	depends !MPU
+	help
+	  Samsung's S5C7375 16/32-bit SOC(ARM920T) for internal use.
+	  It can be supported for memory management type MMU(Linux) and
+
+
+config ARCH_S3C24A0 
+	bool "Samsung S3C24A0"
+	select ISA
+	depends !MPU
+	help 
+	  Samsung's S3C24A0 media processor based on ARM926EJ core.
+
+if MPU
+
+config ARCH_S3C2500
+	bool "Samsung S3C2500"
+	help
+	  Samsung's S3C2500 SOC(ARM940T).
+
+endif
+
+if !MMU && !MPU
+config ARCH_ATMEL
+	bool "Atmel AT91xxx"
+	help
+	  The AT91xxx Series is a subset of the Atmel AT91 16/32-bit
+	  microcontroller family, which is based on the ARM7TDMI
+	  processor core.
+	  refer <http://www.atmel.com>
+
+	  You can also choose this architecture for The GDB/Armulator.
+	  It emulates AT91F40, include ARM7TDMI core and timers/serial.
+	  refer <http://www.uclinux.org/pub/uClinux/utilities/armulator/>.
+
+config ARCH_S3C3410
+	bool "Samsung S3C3410X"
+	help
+	  Samsung's S3C3410X(KS17C40100) 16/32-bit RISC MCU
+	  is a cost-effective and high-performance MCU solution for PDA and
+	  general purpose application. The core is ARM7TDMI. 
+	  
+	  refer <http://www.samsungsemi.com>.
+
+config ARCH_ESPD_4510B
+	bool "ESPD 4510B / Samsung S3C4510B"
+	help
+	  ESPD 4510B evaluation board built on Samsung's
+	  S3C4510B(KS32C50100) 16/32-bit RISC MCU
+	  is a high performance network controller based
+	  on the ARM7TDMI core.
+	  
+	  refer to  <http://www.espd-inc.com/prod01-arm-samsung4510.htm>
+
+config ARCH_S3C44B0
+	bool "Samsung S3C44B0"
+	help
+	  Samsung's S3C44B0X 16/32-bit SOC(ARM7TDMI) without coprocessor 
+ 
+config ARCH_P2001
+	bool "P2001"
+	help
+	  The LPEC P2001 evaluation board has an P2001 processor from
+	  MAZ Brandenburg GmbH, which is based an ARM9TDMI processor core.
+
+endif
+
 endchoice
+
+if !MMU
+source "arch/arm/Kconfig-nommu"
+endif
 
 source "arch/arm/mach-clps711x/Kconfig"
 
@@ -242,6 +370,20 @@ source "arch/arm/mach-h720x/Kconfig"
 source "arch/arm/mach-versatile/Kconfig"
 
 source "arch/arm/mach-aaec2000/Kconfig"
+
+source "arch/arm/mach-atmel/Kconfig"
+
+source "arch/arm/mach-s3c3410/Kconfig"
+
+source "arch/arm/mach-s3c44b0x/Kconfig"
+
+source "arch/arm/mach-s5c7375/Kconfig"
+
+source "arch/arm/mach-espd_4510b/Kconfig"
+
+source "arch/arm/mach-s3c24a0/Kconfig" 
+
+source "arch/arm/mach-p2001/Kconfig"
 
 # Definitions to make life easier
 config ARCH_ACORN
@@ -432,7 +574,7 @@ config LEDS_CPU
 
 config ALIGNMENT_TRAP
 	bool
-	default y if !ARCH_EBSA110
+	default y if !ARCH_EBSA110 && !ARCH_S3C3410 && !ARCH_ATMEL && !ARCH_ESPD_4510B
 	help
 	  ARM processors can not fetch/store information which is not
 	  naturally aligned on the bus, i.e., a 4 byte fetch must start at an
@@ -520,7 +662,7 @@ config XIP_PHYS_ADDR
 
 endmenu
 
-if (ARCH_SA1100 || ARCH_INTEGRATOR || ARCH_OMAP1)
+if (ARCH_SA1100 || ARCH_INTEGRATOR || ARCH_OMAP1 || ARCH_P2001)
 
 menu "CPU Frequency scaling"
 
@@ -546,6 +688,13 @@ config CPU_FREQ_INTEGRATOR
 	  For details, take a look at <file:Documentation/cpu-freq>.
 
 	  If in doubt, say Y.
+
+config CPU_FREQ_P2001
+	tristate 'P2001 cpufreq support'
+	depends on ARCH_P2001 && CPU_FREQ && CPU_FREQ_TABLE
+	default n
+	help
+	  Compiles P2001 cpu frequency scaling module.
 
 endmenu
 

@@ -3,6 +3,8 @@
  *
  *  Copyright (C) 1999-2001 ARM Limited
  *  Copyright (C) 2000 Deep Blue Solutions Ltd.
+ *  Copyright (C) 2003 Hyok S. Choi <hyok.choi@samsung.com>
+ *  modified for NON-PAGED MMU version.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -85,7 +87,9 @@ ENTRY(cpu_arm926_reset)
 	mov	ip, #0
 	mcr	p15, 0, ip, c7, c7, 0		@ invalidate I,D caches
 	mcr	p15, 0, ip, c7, c10, 4		@ drain WB
+#ifdef CONFIG_MMU
 	mcr	p15, 0, ip, c8, c7, 0		@ invalidate I & D TLBs
+#endif
 	mrc	p15, 0, ip, c1, c0, 0		@ ctrl register
 	bic	ip, ip, #0x000f			@ ............wcam
 	bic	ip, ip, #0x1100			@ ...i...s........
@@ -329,6 +333,7 @@ ENTRY(cpu_arm926_dcache_clean_area)
  */
 	.align	5
 ENTRY(cpu_arm926_switch_mm)
+#ifdef CONFIG_MMU
 	mov	ip, #0
 #ifdef CONFIG_CPU_DCACHE_WRITETHROUGH
 	mcr	p15, 0, ip, c7, c6, 0		@ invalidate D cache
@@ -341,8 +346,10 @@ ENTRY(cpu_arm926_switch_mm)
 	mcr	p15, 0, ip, c7, c10, 4		@ drain WB
 	mcr	p15, 0, r0, c2, c0, 0		@ load page table pointer
 	mcr	p15, 0, ip, c8, c7, 0		@ invalidate I & D TLBs
+#endif
 	mov	pc, lr
 
+#ifdef CONFIG_MMU
 /*
  * cpu_arm926_set_pte(ptep, pte)
  *
@@ -379,7 +386,7 @@ ENTRY(cpu_arm926_set_pte)
 #endif
 	mcr	p15, 0, r0, c7, c10, 4		@ drain WB
 	mov	pc, lr
-
+#endif
 	__INIT
 
 	.type	__arm926_setup, #function
@@ -387,7 +394,9 @@ __arm926_setup:
 	mov	r0, #0
 	mcr	p15, 0, r0, c7, c7		@ invalidate I,D caches on v4
 	mcr	p15, 0, r0, c7, c10, 4		@ drain write buffer on v4
+#ifdef CONFIG_MMU
 	mcr	p15, 0, r0, c8, c7		@ invalidate I,D TLBs on v4
+#endif
 
 
 #ifdef CONFIG_CPU_DCACHE_WRITETHROUGH
@@ -417,7 +426,11 @@ __arm926_setup:
 arm926_cr1_clear:
 	.word	0x7f3f
 arm926_cr1_set:
+#if defined(CONFIG_MMU) || defined(CONFIG_CPU_MXU_ENABLE)
 	.word	0x3135
+#else
+	.word	0x3134
+#endif
 
 	__INITDATA
 
@@ -434,7 +447,9 @@ arm926_processor_functions:
 	.word	cpu_arm926_do_idle
 	.word	cpu_arm926_dcache_clean_area
 	.word	cpu_arm926_switch_mm
+#ifdef CONFIG_MMU
 	.word	cpu_arm926_set_pte
+#endif
 	.size	arm926_processor_functions, . - arm926_processor_functions
 
 	.section ".rodata"
@@ -477,19 +492,23 @@ cpu_arm926_name:
 __arm926_proc_info:
 	.long	0x41069260			@ ARM926EJ-S (v5TEJ)
 	.long	0xff0ffff0
+#if CONFIG_MMU
 	.long   PMD_TYPE_SECT | \
 		PMD_SECT_BUFFERABLE | \
 		PMD_SECT_CACHEABLE | \
 		PMD_BIT4 | \
 		PMD_SECT_AP_WRITE | \
 		PMD_SECT_AP_READ
+#endif
 	b	__arm926_setup
 	.long	cpu_arch_name
 	.long	cpu_elf_name
 	.long	HWCAP_SWP|HWCAP_HALF|HWCAP_THUMB|HWCAP_FAST_MULT|HWCAP_EDSP|HWCAP_JAVA
 	.long	cpu_arm926_name
 	.long	arm926_processor_functions
+#ifdef CONFIG_MMU
 	.long	v4wbi_tlb_fns
 	.long	v4wb_user_fns
+#endif
 	.long	arm926_cache_fns
 	.size	__arm926_proc_info, . - __arm926_proc_info

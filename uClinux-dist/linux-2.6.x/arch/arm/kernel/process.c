@@ -2,6 +2,7 @@
  *  linux/arch/arm/kernel/process.c
  *
  *  Copyright (C) 1996-2000 Russell King - Converted to ARM.
+ *  Copyright (C) 2003 Hyok S. Choi - uClinux changes
  *  Original Copyright (C) 1995  Linus Torvalds
  *
  * This program is free software; you can redistribute it and/or modify
@@ -199,6 +200,7 @@ void __show_regs(struct pt_regs *regs)
 		processor_modes[processor_mode(regs)],
 		thumb_mode(regs) ? " (T)" : "",
 		get_fs() == get_ds() ? "kernel" : "user");
+#ifndef CONFIG_CPU_HAS_NO_CP15
 	{
 		unsigned int ctrl, transbase, dac;
 		  __asm__ (
@@ -209,6 +211,7 @@ void __show_regs(struct pt_regs *regs)
 		printk("Control: %04X  Table: %08X  DAC: %08X\n",
 		  	ctrl, transbase, dac);
 	}
+#endif
 }
 
 void show_regs(struct pt_regs * regs)

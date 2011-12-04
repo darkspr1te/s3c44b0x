@@ -2,6 +2,7 @@
  *  linux/include/asm-arm/mmu_context.h
  *
  *  Copyright (C) 1996 Russell King.
+ *  Modified by Hyok S. Choi, 2004.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -13,6 +14,10 @@
 #ifndef __ASM_ARM_MMU_CONTEXT_H
 #define __ASM_ARM_MMU_CONTEXT_H
 
+#include <linux/config.h>
+#ifndef CONFIG_MMU
+#include "nommu_context.h"
+#else /* !CONFIG_MMU */
 #include <asm/proc-fns.h>
 
 #if __LINUX_ARM_ARCH__ >= 6
@@ -93,4 +98,5 @@ switch_mm(struct mm_struct *prev, struct mm_struct *next,
 #define deactivate_mm(tsk,mm)	do { } while (0)
 #define activate_mm(prev,next)	switch_mm(prev, next, NULL)
 
+#endif /* CONFIG_MMU */
 #endif

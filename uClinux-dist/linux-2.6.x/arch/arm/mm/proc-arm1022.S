@@ -3,6 +3,8 @@
  *
  *  Copyright (C) 2000 ARM Limited
  *  Copyright (C) 2000 Deep Blue Solutions Ltd.
+ *  Copyright (C) 2003 Hyok S. Choi <hyok.choi@samsung.com>
+ *  modified for NON-PAGED MMU version.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -89,7 +91,9 @@ ENTRY(cpu_arm1022_reset)
 	mov	ip, #0
 	mcr	p15, 0, ip, c7, c7, 0		@ invalidate I,D caches
 	mcr	p15, 0, ip, c7, c10, 4		@ drain WB
+#ifdef CONFIG_MMU
 	mcr	p15, 0, ip, c8, c7, 0		@ invalidate I & D TLBs
+#endif
 	mrc	p15, 0, ip, c1, c0, 0		@ ctrl register
 	bic	ip, ip, #0x000f 		@ ............wcam
 	bic	ip, ip, #0x1100 		@ ...i...s........
@@ -332,6 +336,7 @@ ENTRY(cpu_arm1022_dcache_clean_area)
  */
 	.align	5
 ENTRY(cpu_arm1022_switch_mm)
+#ifdef CONFIG_MMU
 #ifndef CONFIG_CPU_DCACHE_DISABLE
 	mov	r1, #(CACHE_DSEGMENTS - 1) << 5	@ 16 segments
 1:	orr	r3, r1, #(CACHE_DENTRIES - 1) << 26 @ 64 entries
@@ -348,8 +353,10 @@ ENTRY(cpu_arm1022_switch_mm)
 	mcr	p15, 0, r1, c7, c10, 4		@ drain WB
 	mcr	p15, 0, r0, c2, c0, 0		@ load page table pointer
 	mcr	p15, 0, r1, c8, c7, 0		@ invalidate I & D TLBs
+#endif
 	mov	pc, lr
         
+#ifdef CONFIG_MMU
 /*
  * cpu_arm1022_set_pte(ptep, pte)
  *
@@ -385,6 +392,7 @@ ENTRY(cpu_arm1022_set_pte)
 	mcr	p15, 0, r0, c7, c10, 1		@ clean D entry
 #endif
 	mov	pc, lr
+#endif /* CONFIG_MMU */
 
 	__INIT
 
@@ -393,7 +401,9 @@ __arm1022_setup:
 	mov	r0, #0
 	mcr	p15, 0, r0, c7, c7		@ invalidate I,D caches on v4
 	mcr	p15, 0, r0, c7, c10, 4		@ drain write buffer on v4
+#ifdef CONFIG_MMU
 	mcr	p15, 0, r0, c8, c7		@ invalidate I,D TLBs on v4
+#endif
 	mrc	p15, 0, r0, c1, c0		@ get control register v4
 	ldr	r5, arm1022_cr1_clear
 	bic	r0, r0, r5
@@ -416,7 +426,11 @@ __arm1022_setup:
 arm1022_cr1_clear:
 	.word	0x7f3f
 arm1022_cr1_set:
+#if defined(CONFIG_MMU) || defined(CONFIG_CPU_MXU_ENABLE)
 	.word	0x3935
+#else
+	.word	0x3934
+#endif
 
 	__INITDATA
 
@@ -433,7 +447,9 @@ arm1022_processor_functions:
 	.word	cpu_arm1022_do_idle
 	.word	cpu_arm1022_dcache_clean_area
 	.word	cpu_arm1022_switch_mm
+#ifdef CONFIG_MMU
 	.word	cpu_arm1022_set_pte
+#endif
 	.size	arm1022_processor_functions, . - arm1022_processor_functions
 
 	.section ".rodata"
@@ -479,17 +495,21 @@ cpu_arm1022_name:
 __arm1022_proc_info:
 	.long	0x4105a220			@ ARM 1022E (v5TE)
 	.long	0xff0ffff0
+#ifdef CONFIG_MMU
 	.long   PMD_TYPE_SECT | \
 		PMD_BIT4 | \
 		PMD_SECT_AP_WRITE | \
 		PMD_SECT_AP_READ
+#endif
 	b	__arm1022_setup
 	.long	cpu_arch_name
 	.long	cpu_elf_name
 	.long	HWCAP_SWP | HWCAP_HALF | HWCAP_THUMB | HWCAP_EDSP
 	.long	cpu_arm1022_name
 	.long	arm1022_processor_functions
+#ifdef CONFIG_MMU
 	.long	v4wbi_tlb_fns
 	.long	v4wb_user_fns
+#endif
 	.long	arm1022_cache_fns
 	.size	__arm1022_proc_info, . - __arm1022_proc_info

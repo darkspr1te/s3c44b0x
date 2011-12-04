@@ -6,6 +6,7 @@
 # for more details.
 #
 # Copyright (C) 1995-2001 by Russell King
+# Copyright (C) 2004 by Hyok S. Choi (for uClinux/ARM 2.6)
 
 LDFLAGS_vmlinux	:=-p --no-undefined -X
 CPPFLAGS_vmlinux.lds = -DTEXTADDR=$(TEXTADDR) -DDATAADDR=$(DATAADDR)
@@ -16,6 +17,11 @@ GZFLAGS		:=-9
 # Do not use arch/arm/defconfig - it's always outdated.
 # Select a platform tht is kept up-to-date
 KBUILD_DEFCONFIG := versatile_defconfig
+
+# defines filename extension for mmu type, if any.
+ifeq ($(CONFIG_MMU),)
+MMUEXT		:= -nommu
+endif
 
 ifeq ($(CONFIG_FRAME_POINTER),y)
 CFLAGS		+=-fno-omit-frame-pointer -mapcs -mno-sched-prolog
@@ -45,11 +51,17 @@ arch-$(CONFIG_CPU_32v3)		:=-D__LINUX_ARM_ARCH__=3 -march=armv3
 # This selects how we optimise for the processor.
 tune-$(CONFIG_CPU_ARM610)	:=-mtune=arm610
 tune-$(CONFIG_CPU_ARM710)	:=-mtune=arm710
+tune-$(CONFIG_CPU_ARM7TDMI)	:=-mtune=arm7tdmi
+tune-$(CONFIG_CPU_S3C4510B)	:=-mtune=arm7tdmi
 tune-$(CONFIG_CPU_ARM720T)	:=-mtune=arm7tdmi
+tune-$(CONFIG_CPU_ARM740T)	:=-mtune=arm7tdmi
+tune-$(CONFIG_CPU_ARM9TDMI)	:=-mtune=arm9tdmi
 tune-$(CONFIG_CPU_ARM920T)	:=-mtune=arm9tdmi
 tune-$(CONFIG_CPU_ARM922T)	:=-mtune=arm9tdmi
 tune-$(CONFIG_CPU_ARM925T)	:=-mtune=arm9tdmi
 tune-$(CONFIG_CPU_ARM926T)	:=-mtune=arm9tdmi
+tune-$(CONFIG_CPU_ARM940T)	:=-mtune=arm9tdmi
+tune-$(CONFIG_CPU_ARM946T)	:=-mtune=arm9tdmi
 tune-$(CONFIG_CPU_SA110)	:=-mtune=strongarm110
 tune-$(CONFIG_CPU_SA1100)	:=-mtune=strongarm1100
 tune-$(CONFIG_CPU_XSCALE)	:=$(call cc-option,-mtune=xscale,-mtune=strongarm110) -Wa,-mcpu=xscale
@@ -63,8 +75,12 @@ AFLAGS		+=$(CFLAGS_ABI) $(arch-y) $(tune-y) -msoft-float
 CHECKFLAGS	+= -D__arm__
 
 #Default value
-head-y		:= arch/arm/kernel/head.o arch/arm/kernel/init_task.o
+head-y		:= arch/arm/kernel/head$(MMUEXT).o arch/arm/kernel/init_task.o
+ifeq ($(CONFIG_MMU),y)
 textaddr-y	:= 0xC0008000
+else
+textaddr-y	:= 0x00008000
+endif
 
  machine-$(CONFIG_ARCH_RPC)	   := rpc
  machine-$(CONFIG_ARCH_EBSA110)	   := ebsa110
@@ -99,6 +115,22 @@ textaddr-$(CONFIG_ARCH_FORTUNET)   := 0xc0008000
  machine-$(CONFIG_ARCH_IMX)	   := imx
  machine-$(CONFIG_ARCH_H720X)	   := h720x
  machine-$(CONFIG_ARCH_AAEC2000)   := aaec2000
+ machine-$(CONFIG_ARCH_ATMEL)	   := atmel
+textaddr-$(CONFIG_ARCH_ATMEL)	   := 0x01000000
+ machine-$(CONFIG_ARCH_ESPD_4510B) := espd_4510b
+textaddr-$(CONFIG_ARCH_ESPD_4510B) := 0x00008000
+ machine-$(CONFIG_ARCH_S3C3410)	   := s3c3410
+textaddr-$(CONFIG_ARCH_S3C3410)	   := 0x01020000
+ machine-$(CONFIG_ARCH_S3C44B0)	   := s3c44b0x
+textaddr-$(CONFIG_ARCH_S3C44B0)	   := 0x0c008000
+ machine-$(CONFIG_ARCH_S5C7375)	   := s5c7375
+textaddr-$(CONFIG_ARCH_S5C7375)	   := 0x00008000
+ machine-$(CONFIG_ARCH_S3C24A0)	   := s3c24a0
+ifeq ($(CONFIG_MMU),)
+textaddr-$(CONFIG_ARCH_S3C24A0)	   := 0x10008000
+endif
+ machine-$(CONFIG_ARCH_P2001)	   := p2001
+textaddr-$(CONFIG_ARCH_P2001)	   := 0x40100000
 
 ifeq ($(CONFIG_ARCH_EBSA110),y)
 # This is what happens if you forget the IOCS16 line.
@@ -127,8 +159,18 @@ MACHINE  := arch/arm/mach-$(machine-y)/
 else
 MACHINE  :=
 endif
-  
-export	TEXTADDR DATAADDR GZFLAGS
+
+# set HEAD as default (kernel/head.o)
+HEAD		:= head$(MMUEXT).o
+# Check if an overriding head.S exist for non-paged kernel
+ifeq ($(CONFIG_MMU),)
+ifeq ($(MACHINE)head.S, $(wildcard $(MACHINE)head.S))
+head-y		:= $(MACHINE)head.o arch/arm/kernel/init_task.o
+HEAD		:= ../mach-$(machine-y)/head.o
+endif
+endif
+
+export	MACHINE HEAD MMUEXT TEXTADDR GZFLAGS
 
 # Do we have FASTFPE?
 FASTFPE		:=arch/arm/fastfpe
@@ -153,10 +195,14 @@ drivers-$(CONFIG_ARCH_L7200)	+= drivers/acorn/char/
 libs-y				+= arch/arm/lib/
 
 # Default target when executing plain make
+ifeq ($(CONFIG_MMU),y)
 ifeq ($(CONFIG_XIP_KERNEL),y)
 all: xipImage
 else
 all: zImage
+endif
+else
+all: Image
 endif
 
 boot := arch/arm/boot

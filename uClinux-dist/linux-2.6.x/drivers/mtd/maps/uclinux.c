@@ -5,7 +5,7 @@
  *
  *	(C) Copyright 2002, Greg Ungerer (gerg@snapgear.com)
  *
- * 	$Id: uclinux.c,v 1.10 2005/01/05 18:05:13 dwmw2 Exp $
+ * 	$Id: uclinux.c,v 1.17 2005/10/28 06:25:49 gerg Exp $
  */
 
 /****************************************************************************/

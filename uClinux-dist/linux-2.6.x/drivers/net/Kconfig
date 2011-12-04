@@ -730,7 +730,7 @@ config LANCE
 
 config NET_VENDOR_SMC
 	bool "Western Digital/SMC cards"
-	depends on NET_ETHERNET && (ISA || MCA || EISA || MAC)
+	depends on NET_ETHERNET && (ISA || MCA || EISA || MAC || EMBEDDED)
 	help
 	  If you have a network (Ethernet) card belonging to this class, say Y
 	  and read the Ethernet-HOWTO, available from
@@ -820,7 +820,7 @@ config SMC91X
 
 config SMC9194
 	tristate "SMC 9194 support"
-	depends on NET_VENDOR_SMC && (ISA || MAC && BROKEN)
+	depends on NET_VENDOR_SMC && (ISA || MAC && BROKEN || EMBEDDED)
 	select CRC32
 	---help---
 	  This is support for the SMC9xxx based Ethernet cards. Choose this
@@ -1059,7 +1059,7 @@ config ETH16I
 
 config NE2000
 	tristate "NE2000/NE1000 support"
-	depends on NET_ISA || (Q40 && m) || M32R
+	depends on NET_ISA || (Q40 && m) || M32R || EMBEDDED
 	select CRC32
 	---help---
 	  If you have a network (Ethernet) card of this type, say Y and read
@@ -1190,7 +1190,7 @@ config IBM_EMAC_SKBRES
 
 config NET_PCI
 	bool "EISA, VLB, PCI and on board controllers"
-	depends on NET_ETHERNET && (ISA || EISA || PCI)
+	depends on NET_ETHERNET && (ISA || EISA || PCI || EMBEDDED)
 	help
 	  This is another class of network cards which attach directly to the
 	  bus. If you have one of those, say Y and read the Ethernet-HOWTO,
@@ -1330,7 +1330,7 @@ config FORCEDETH
 
 config CS89x0
 	tristate "CS89x0 support"
-	depends on (NET_PCI && (ISA || ARCH_IXDP2X01)) || ARCH_PNX0105
+	depends on (NET_PCI && (ISA || ARCH_IXDP2X01 || M68328 || M68EZ328 || M68VZ328 || MACH_DM270)) || ARCH_PNX0105
 	---help---
 	  Support for CS89x0 chipset based Ethernet cards. If you have a
 	  network (Ethernet) card of this type, say Y and read the
@@ -1341,6 +1341,14 @@ config CS89x0
 	  To compile this driver as a module, choose M here and read
 	  <file:Documentation/networking/net-modules.txt>.  The module will be
 	  called cs89x.
+
+config CS89x0_SWAPPED
+	bool "Hardware swapped CS89x0"
+	depends on CS89x0 && !NET_PCI && !ISA
+	---help---
+	  Say Y if your CS89x0 data bus is swapped.
+	  This option is for single board computers using a CS89x0 chip. If you
+	  are using a regular Ethernet card, say N.
 
 config TC35815
 	tristate "TOSHIBA TC35815 Ethernet support"
@@ -1747,7 +1755,7 @@ config 68360_ENET
 
 config FEC
 	bool "FEC ethernet controller (of ColdFire CPUs)"
-	depends on M523x || M527x || M5272 || M528x
+	depends on M523x || M527x || M5272 || M528x || M520x
 	help
 	  Say Y here if you want to use the built-in 10/100 Fast ethernet
 	  controller on some Motorola ColdFire processors.

@@ -2,6 +2,8 @@
  *  linux/arch/arm/kernel/calls.S
  *
  *  Copyright (C) 1995-2005 Russell King
+ *  Copyright (C) 2003 Hyok S. Choi <hyok.choi@samsung.com>
+ *  modified for nommu version.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -12,6 +14,20 @@
 #ifndef NR_syscalls
 #define NR_syscalls 328
 #else
+
+/* excludes unsupported system calls in uClinux */
+#ifndef CONFIG_MMU
+#define sys_fork_wrapper	sys_ni_syscall
+#define sys_mprotect		sys_ni_syscall
+#define sys_msync		sys_ni_syscall
+#define sys_mlock		sys_ni_syscall
+#define sys_munlock		sys_ni_syscall
+#define sys_mlockall		sys_ni_syscall
+#define sys_munlockall		sys_ni_syscall
+#define sys_mincore		sys_ni_syscall
+#define sys_madvise		sys_ni_syscall
+#define sys_remap_file_pages	sys_ni_syscall
+#endif
 
 __syscall_start:
 /* 0 */		.long	sys_restart_syscall

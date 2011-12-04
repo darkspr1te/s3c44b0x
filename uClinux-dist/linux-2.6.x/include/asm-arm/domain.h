@@ -2,6 +2,7 @@
  *  linux/include/asm-arm/domain.h
  *
  *  Copyright (C) 1999 Russell King.
+ *  Copyright (C) 2004 Hyok S. Choi
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -32,6 +33,7 @@
 #define domain_val(dom,type)	((type) << (2*(dom)))
 
 #ifndef __ASSEMBLY__
+#ifdef CONFIG_MMU
 #define set_domain(x)					\
 	do {						\
 	__asm__ __volatile__(				\
@@ -48,5 +50,9 @@
 	set_domain(thread->cpu_domain);				\
 	} while (0)
 
+#else
+#define set_domain(x) do {} while(0)
+#define modify_domain(x,y) do {} while(0)
+#endif /* CONFIG_MMU */
 #endif
 #endif /* !__ASSEMBLY__ */

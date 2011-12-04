@@ -2,6 +2,9 @@
  *  linux/arch/arm/mm/init.c
  *
  *  Copyright (C) 1995-2002 Russell King
+ *  for uClinux, 2003,  Hyok S. Choi <hyok.choi@samsung.com>
+ *    machine dependent bootmem and initmem reserve/free
+ *    codes are gone to hardware.h
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -26,11 +29,14 @@
 #include <asm/mach/arch.h>
 #include <asm/mach/map.h>
 
+#ifdef CONFIG_MMU
 #define TABLE_SIZE	(2 * PTRS_PER_PTE * sizeof(pte_t))
 
 DEFINE_PER_CPU(struct mmu_gather, mmu_gathers);
 
 extern pgd_t swapper_pg_dir[PTRS_PER_PGD];
+#endif
+
 extern void _stext, _text, _etext, __data_start, _end, __init_begin, __init_end;
 extern unsigned long phys_initrd_start;
 extern unsigned long phys_initrd_size;
@@ -269,7 +275,9 @@ static int __init check_initrd(struct meminfo *mi)
 static __init void reserve_node_zero(unsigned int bootmap_pfn, unsigned int bootmap_pages)
 {
 	pg_data_t *pgdat = NODE_DATA(0);
+#ifdef CONFIG_MMU
 	unsigned long res_size = 0;
+#endif
 
 	/*
 	 * Register the kernel text and data with bootmem.
@@ -281,12 +289,23 @@ static __init void reserve_node_zero(unsigned int bootmap_pfn, unsigned int boot
 	reserve_bootmem_node(pgdat, __pa(&_stext), &_end - &_stext);
 #endif
 
+#ifdef CONFIG_MMU
 	/*
 	 * Reserve the page tables.  These are already in use,
 	 * and can only be in node 0.
 	 */
 	reserve_bootmem_node(pgdat, __pa(swapper_pg_dir),
 			     PTRS_PER_PGD * sizeof(pgd_t));
+#else /* CONFIG_MMU */
+  #ifdef PA_SDRAM_BASE
+	/*
+	 * Register the exception vector page.
+	 * some architectures which the DRAM is the exception vector to trap,
+	 * alloc_page breaks with error, although it is not NULL, but "0."
+	 */
+	reserve_bootmem_node(pgdat, PA_SDRAM_BASE, PAGE_SIZE);
+  #endif
+#endif /* ! CONFIG_MMU */
 
 	/*
 	 * And don't forget to reserve the allocator bitmap,
@@ -295,6 +314,7 @@ static __init void reserve_node_zero(unsigned int bootmap_pfn, unsigned int boot
 	reserve_bootmem_node(pgdat, bootmap_pfn << PAGE_SHIFT,
 			     bootmap_pages << PAGE_SHIFT);
 
+#ifdef CONFIG_MMU
 	/*
 	 * Hmm... This should go elsewhere, but we really really need to
 	 * stop things allocating the low memory; ideally we need a better
@@ -322,6 +342,13 @@ static __init void reserve_node_zero(unsigned int bootmap_pfn, unsigned int boot
 #endif
 	if (res_size)
 		reserve_bootmem_node(pgdat, PHYS_OFFSET, res_size);
+#else /* CONFIG_MMU */
+	/*
+	 * the machine/platform dependent bootmem reserve codes
+	 * define it in include/asm-armnommu/arch/hardware.h
+	 */
+	MACH_RESERVE_BOOTMEM();
+#endif /* !CONFIG_MMU */
 }
 
 /*
@@ -429,8 +456,18 @@ void __init paging_init(struct meminfo *mi, struct machine_desc *mdesc)
 	/*
 	 * allocate the zero page.  Note that we count on this going ok.
 	 */
+#if defined (PA_SDRAM_BASE) && !defined(CONFIG_MMU)
+	/*
+	 * hyok: some architecture has 0 based SDRAM memory map.
+	 *       we should check if the ptr was not "NULL" but the exact address "0".
+	 *       for that, we do that in reserve_node_zero.
+	 */
+	zero_page = (void *)PA_SDRAM_BASE;
+#else
 	zero_page = alloc_bootmem_low_pages(PAGE_SIZE);
+#endif
 
+#ifdef CONFIG_MMU
 	/*
 	 * initialise the page tables.
 	 */
@@ -438,6 +475,7 @@ void __init paging_init(struct meminfo *mi, struct machine_desc *mdesc)
 	if (mdesc->map_io)
 		mdesc->map_io();
 	local_flush_tlb_all();
+#endif
 
 	/*
 	 * initialise the zones within each node
@@ -497,6 +535,7 @@ void __init paging_init(struct meminfo *mi, struct machine_desc *mdesc)
 				bdata->node_boot_start >> PAGE_SHIFT, zhole_size);
 	}
 
+#ifdef CONFIG_MMU
 	/*
 	 * finish off the bad pages once
 	 * the mem_map is initialised
@@ -504,6 +543,7 @@ void __init paging_init(struct meminfo *mi, struct machine_desc *mdesc)
 	memzero(zero_page, PAGE_SIZE);
 	empty_zero_page = virt_to_page(zero_page);
 	flush_dcache_page(empty_zero_page);
+#endif /* CONFIG_MMU */
 }
 
 static inline void free_area(unsigned long addr, unsigned long end, char *s)
@@ -613,9 +653,17 @@ void __init mem_init(void)
 			totalram_pages += free_all_bootmem_node(pgdat);
 	}
 
+#ifdef CONFIG_MMU
 #ifdef CONFIG_SA1111
 	/* now that our DMA memory is actually so designated, we can free it */
 	free_area(PAGE_OFFSET, (unsigned long)swapper_pg_dir, NULL);
+#endif
+#else
+	/*
+	 * the machine/platform dependent bootmem free code.
+	 * define it in include/asm-armnommu/arch/hardware.h
+	 */
+	MACH_FREE_BOOTMEM();
 #endif
 
 	/*
@@ -649,7 +697,15 @@ void __init mem_init(void)
 
 void free_initmem(void)
 {
+#ifdef CONFIG_MMU
 	if (!machine_is_integrator() && !machine_is_cintegrator()) {
+#else
+	/*
+	 * machine depend decision, if initmem is safe to free.
+	 * it is defiened in hardware.h by default, true.
+	 */
+	if (DO_FREE_INITMEM()) {
+#endif
 		free_area((unsigned long)(&__init_begin),
 			  (unsigned long)(&__init_end),
 			  "init");

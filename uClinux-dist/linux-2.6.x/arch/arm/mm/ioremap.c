@@ -8,6 +8,7 @@
  * Hacked for ARM by Phil Blundell <philb@gnu.org>
  * Hacked to allow all architectures to build, and various cleanups
  * by Russell King
+ * Modified for uClinux/ARM by Hyok S. Choi <hyok.choi@samsung.com>
  *
  * This allows a driver to remap an arbitrary region of bus memory into
  * virtual space.  One should *only* use readl, writel, memcpy_toio and
@@ -28,6 +29,8 @@
 #include <asm/cacheflush.h>
 #include <asm/io.h>
 #include <asm/tlbflush.h>
+
+#ifdef CONFIG_MMU
 
 static inline void
 remap_area_pte(pte_t * pte, unsigned long address, unsigned long size,
@@ -163,11 +166,25 @@ __ioremap(unsigned long phys_addr, size_t size, unsigned long flags,
 	}
 	return (void __iomem *) (offset + (char *)addr);
 }
+
+#else	/* CONFIG_MMU */
+
+void *
+__ioremap(unsigned long phys_addr, size_t size, unsigned long flags,
+	  unsigned long align)
+{
+	return (void *) (phys_addr);
+}
+
+#endif /* !CONFIG_MMU */
+
 EXPORT_SYMBOL(__ioremap);
 
 void __iounmap(void __iomem *addr)
 {
+#ifdef CONFIG_MMU
 	vfree((void *) (PAGE_MASK & (unsigned long) addr));
+#endif
 }
 EXPORT_SYMBOL(__iounmap);
 

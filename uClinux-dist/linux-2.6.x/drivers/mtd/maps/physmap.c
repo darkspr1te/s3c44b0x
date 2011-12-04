@@ -53,10 +53,13 @@ static int __init init_physmap(void)
        	printk(KERN_NOTICE "physmap flash device: %lx at %lx\n", physmap_map.size, physmap_map.phys);
 	physmap_map.virt = ioremap(physmap_map.phys, physmap_map.size);
 
+#ifndef CONFIG_MTD_M5208
+	/* The M5208EVB has flash mapped at 0. */
 	if (!physmap_map.virt) {
 		printk("Failed to ioremap\n");
 		return -EIO;
 	}
+#endif
 
 	simple_map_init(&physmap_map);
 

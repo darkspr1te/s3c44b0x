@@ -119,6 +119,17 @@
 /*Digi jsm */
 #define PORT_JSM        65
 
+/* DCC(JTAG) emulation port types */
+#define PORT_DCC_JTAG1	71
+
+/* Samsung S3C4510B */
+#define PORT_S3C4510B   72
+
+#define PORT_P2001	73
+
+/* TI TMS320DM270 */
+#define PORT_DM270      74
+
 #ifdef __KERNEL__
 
 #include <linux/config.h>

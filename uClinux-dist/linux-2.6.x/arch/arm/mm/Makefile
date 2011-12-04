@@ -1,10 +1,12 @@
 #
 # Makefile for the linux arm-specific parts of the memory manager.
+# modified by Hyok S. Choi for nommu support
 #
 
-obj-y				:= consistent.o extable.o fault-armv.o \
-				   fault.o flush.o init.o ioremap.o mmap.o \
+obj-y				:= consistent$(MMUEXT).o extable.o \
+				   fault.o init.o ioremap.o \
 				   mm-armv.o
+obj-$(CONFIG_MMU)		+= fault-armv.o flush.o mmap.o
 
 obj-$(CONFIG_MODULES)		+= proc-syms.o
 
@@ -37,13 +39,19 @@ obj-$(CONFIG_CPU_TLB_V4WB)	+= tlb-v4wb.o
 obj-$(CONFIG_CPU_TLB_V4WBI)	+= tlb-v4wbi.o
 obj-$(CONFIG_CPU_TLB_V6)	+= tlb-v6.o
 
+obj-$(CONFIG_CPU_S3C4510B)	+= proc-s3c4510b.o
 obj-$(CONFIG_CPU_ARM610)	+= proc-arm6_7.o
 obj-$(CONFIG_CPU_ARM710)	+= proc-arm6_7.o
+obj-$(CONFIG_CPU_ARM7TDMI)	+= proc-arm7tdmi.o
 obj-$(CONFIG_CPU_ARM720T)	+= proc-arm720.o
+obj-$(CONFIG_CPU_ARM740T)	+= proc-arm740.o
+obj-$(CONFIG_CPU_ARM9TDMI)	+= proc-arm9tdmi.o
 obj-$(CONFIG_CPU_ARM920T)	+= proc-arm920.o
 obj-$(CONFIG_CPU_ARM922T)	+= proc-arm922.o
 obj-$(CONFIG_CPU_ARM925T)	+= proc-arm925.o
 obj-$(CONFIG_CPU_ARM926T)	+= proc-arm926.o
+obj-$(CONFIG_CPU_ARM940T)	+= proc-arm940.o
+obj-$(CONFIG_CPU_ARM946E)	+= proc-arm946.o
 obj-$(CONFIG_CPU_ARM1020)	+= proc-arm1020.o
 obj-$(CONFIG_CPU_ARM1020E)	+= proc-arm1020e.o
 obj-$(CONFIG_CPU_ARM1022)	+= proc-arm1022.o

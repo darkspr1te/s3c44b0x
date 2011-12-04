@@ -47,6 +47,7 @@
 #define CPUID_TCM	2
 #define CPUID_TLBTYPE	3
 
+#ifndef CONFIG_CPU_HAS_NO_CP15
 #define read_cpuid(reg)							\
 	({								\
 		unsigned int __val;					\
@@ -56,6 +57,9 @@
 		    : "cc");						\
 		__val;							\
 	})
+#else
+#define read_cpuid(reg) (0)
+#endif
 
 /*
  * This is used to ensure the compiler did actually allocate the register we
@@ -102,7 +106,9 @@ void hook_fault_code(int nr, int (*fn)(unsigned long, unsigned int,
 
 extern asmlinkage void __backtrace(void);
 extern asmlinkage void c_backtrace(unsigned long fp, int pmode);
+#ifdef CONFIG_MMU
 extern void show_pte(struct mm_struct *mm, unsigned long addr);
+#endif
 extern void __show_regs(struct pt_regs *);
 
 extern int cpu_architecture(void);

@@ -2,6 +2,7 @@
  *  linux/arch/arm/mm/proc-syms.c
  *
  *  Copyright (C) 2000-2002 Russell King
+ *  Modified by Hyok S. Choi, 2004
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -16,7 +17,9 @@
 
 #ifndef MULTI_CPU
 EXPORT_SYMBOL(cpu_dcache_clean_area);
+#ifdef CONFIG_MMU
 EXPORT_SYMBOL(cpu_set_pte);
+#endif
 #else
 EXPORT_SYMBOL(processor);
 #endif

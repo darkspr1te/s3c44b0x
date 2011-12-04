@@ -2,6 +2,7 @@
  *  linux/include/asm-arm/mach/arch.h
  *
  *  Copyright (C) 2000 Russell King
+ *  Modified by Hyok S. Choi for uClinux, 2004
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -22,8 +23,10 @@ struct machine_desc {
 	unsigned int		nr;		/* architecture number	*/
 	unsigned int		phys_ram;	/* start of physical ram */
 	unsigned int		phys_io;	/* start of physical io	*/
+#ifdef CONFIG_MMU
 	unsigned int		io_pg_offst;	/* byte offset for io 
 						 * page tabe entry	*/
+#endif
 
 	const char		*name;		/* architecture name	*/
 	unsigned long		boot_params;	/* tagged list		*/
@@ -38,7 +41,9 @@ struct machine_desc {
 	void			(*fixup)(struct machine_desc *,
 					 struct tag *, char **,
 					 struct meminfo *);
+#ifdef CONFIG_MMU
 	void			(*map_io)(void);/* IO mapping function	*/
+#endif
 	void			(*init_irq)(void);
 	struct sys_timer	*timer;		/* system tick timer	*/
 	void			(*init_machine)(void);

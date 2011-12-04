@@ -2,6 +2,7 @@
  *  linux/arch/arm/kernel/setup.c
  *
  *  Copyright (C) 1995-2001 Russell King
+ *  Copyright (C) 2003, 2004 Hyok S. Choi - uClinux support
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -140,6 +141,7 @@ static struct resource io_res[] = {
 #define lp1 io_res[1]
 #define lp2 io_res[2]
 
+#ifndef CONFIG_CPU_HAS_NO_CP15
 static const char *cache_types[16] = {
 	"write-through",
 	"write-back",
@@ -196,6 +198,7 @@ static const char *cache_lockdown[16] = {
 	"format C",
 	"undefined 15",
 };
+#endif
 
 static const char *proc_arch[] = {
 	"undefined/unknown",
@@ -227,6 +230,7 @@ static const char *proc_arch[] = {
 #define CACHE_M(y)	((y) & (1 << 2))
 #define CACHE_LINE(y)	((y) & 3)
 
+#ifndef CONFIG_CPU_HAS_NO_CP15
 static inline void dump_cache(const char *prefix, int cpu, unsigned int cache)
 {
 	unsigned int mult = 2 + (CACHE_M(cache) ? 1 : 0);
@@ -255,6 +259,7 @@ static void __init dump_cpu_info(int cpu)
 		}
 	}
 }
+#endif
 
 int cpu_architecture(void)
 {
@@ -284,6 +289,7 @@ static void __init setup_processor(void)
 {
 	struct proc_info_list *list;
 
+#ifndef CONFIG_CPU_HAS_NO_CP15
 	/*
 	 * locate processor in the list of supported processor
 	 * types.  The linker builds this table for us from the
@@ -295,6 +301,12 @@ static void __init setup_processor(void)
 		       "to continue.\n", processor_id);
 		while (1);
 	}
+#else
+	extern struct proc_info_list __proc_info_begin, __proc_info_end;
+	for (list = &__proc_info_begin; list < &__proc_info_end ; list++)
+		if ((processor_id & list->cpu_mask) == list->cpu_val)
+			break;
+#endif
 
 	cpu_name = list->cpu_name;
 
@@ -311,9 +323,13 @@ static void __init setup_processor(void)
 	cpu_cache = *list->cache;
 #endif
 
+#ifndef CONFIG_CPU_HAS_NO_CP15
 	printk("CPU: %s [%08x] revision %d (ARMv%s)\n",
 	       cpu_name, processor_id, (int)processor_id & 15,
 	       proc_arch[cpu_architecture()]);
+#else
+	printk("CPU: %s [%08x]\n", cpu_name, processor_id);
+#endif
 
 	sprintf(system_utsname.machine, "%s%c", list->arch_name, ENDIANNESS);
 	sprintf(elf_platform, "%s%c", list->elf_name, ENDIANNESS);
@@ -381,6 +397,19 @@ static struct machine_desc * __init setup_machine(unsigned int nr)
 
 	return list;
 }
+
+static void __init show_memory_management_type(void)
+{
+	printk("Memory management: ");
+#ifdef CONFIG_MMU
+	printk("Paged(MMU)\n");
+#elifdef CONFIG_MPU
+	printk("Non-Paged(MPU)\n");
+#else
+	printk("Non-Paged(unused/noMMU)\n");
+#endif
+}
+
 
 static void __init early_initrd(char **p)
 {
@@ -734,6 +763,8 @@ void __init setup_arch(char **cmdline_p)
 	mdesc = setup_machine(machine_arch_type);
 	machine_name = mdesc->name;
 
+	show_memory_management_type();
+
 	if (mdesc->soft_reboot)
 		reboot_setup("s");
 
@@ -813,6 +844,7 @@ static const char *hwcap_str[] = {
 	NULL
 };
 
+#ifndef CONFIG_CPU_HAS_NO_CP15
 static void
 c_show_cache(struct seq_file *m, const char *type, unsigned int cache)
 {
@@ -828,6 +860,7 @@ c_show_cache(struct seq_file *m, const char *type, unsigned int cache)
 		type, 1 << (6 + CACHE_SIZE(cache) - CACHE_ASSOC(cache) -
 			    CACHE_LINE(cache)));
 }
+#endif
 
 static int c_show(struct seq_file *m, void *v)
 {
@@ -877,6 +910,7 @@ static int c_show(struct seq_file *m, void *v)
 	}
 	seq_printf(m, "CPU revision\t: %d\n", processor_id & 15);
 
+#ifndef CONFIG_CPU_HAS_NO_CP15
 	{
 		unsigned int cache_info = read_cpuid(CPUID_CACHETYPE);
 		if (cache_info != processor_id) {
@@ -897,6 +931,7 @@ static int c_show(struct seq_file *m, void *v)
 			}
 		}
 	}
+#endif
 
 	seq_puts(m, "\n");
 

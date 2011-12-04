@@ -2,6 +2,7 @@
  *  linux/arch/arm/mm/mm-armv.c
  *
  *  Copyright (C) 1998-2002 Russell King
+ *  Copyright (C) 2004 Hyok S. Choi for nommu
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -24,6 +25,8 @@
 #include <asm/tlbflush.h>
 
 #include <asm/mach/map.h>
+
+#ifdef CONFIG_MMU
 
 #define CPOLICY_UNCACHED	0
 #define CPOLICY_BUFFERED	1
@@ -569,6 +572,7 @@ static void __init create_mapping(struct map_desc *md)
 		length -= PAGE_SIZE;
 	}
 }
+#endif /* CONFIG_MMU */
 
 /*
  * In order to soft-boot, we need to insert a 1:1 mapping in place of
@@ -577,6 +581,7 @@ static void __init create_mapping(struct map_desc *md)
  */
 void setup_mm_for_reboot(char mode)
 {
+#ifdef CONFIG_MMU
 	unsigned long base_pmdval;
 	pgd_t *pgd;
 	int i;
@@ -599,8 +604,12 @@ void setup_mm_for_reboot(char mode)
 		pmd[1] = __pmd(pmdval + (1 << (PGDIR_SHIFT - 1)));
 		flush_pmd_entry(pmd);
 	}
+#else /* !CONFIG_MMU */
+	printk("FIXME: setup_mm_for_reboot %s %i\n",__FILE__,__LINE__);
+#endif /* CONFIG_MMU */
 }
 
+#ifdef CONFIG_MMU
 extern void _stext, _etext;
 
 /*
@@ -705,3 +714,13 @@ void __init iotable_init(struct map_desc *io_desc, int nr)
 	for (i = 0; i < nr; i++)
 		create_mapping(io_desc + i);
 }
+#endif /* CONFIG_MMU */
+
+#if !defined(CONFIG_MMU) && defined(CONFIG_MAGIC_ROM_PTR)
+int is_in_rom(unsigned long addr)
+{
+        /* Anything not in operational RAM is returned as in rom! */
+        return (addr < CONFIG_DRAM_BASE 
+		|| addr >= (CONFIG_DRAM_BASE + CONFIG_DRAM_SIZE)) ? 1 : 0;
+}
+#endif /* !CONFIG_MMU && CONFIG_MAGIC_ROM_PTR */

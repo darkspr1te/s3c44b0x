@@ -2,6 +2,7 @@
  *  linux/include/asm-arm/tlbflush.h
  *
  *  Copyright (C) 1999-2003 Russell King
+ *  Modified for uClinux by Hyok S. Choi, 2004
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -12,6 +13,12 @@
 
 #include <linux/config.h>
 #include <asm/glue.h>
+
+#ifndef CONFIG_MMU
+
+#define tlb_flush(tlb)	((void) tlb)
+
+#else
 
 #define TLB_V3_PAGE	(1 << 0)
 #define TLB_V4_U_PAGE	(1 << 1)
@@ -416,5 +423,7 @@ extern void update_mmu_cache(struct vm_area_struct *vma, unsigned long addr, pte
 #define flush_tlb_pgtables(mm,start,end)	do { } while (0)
 
 #endif
+
+#endif	/* CONFIG_MMU */
 
 #endif

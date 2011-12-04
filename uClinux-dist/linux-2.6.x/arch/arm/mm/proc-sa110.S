@@ -2,6 +2,8 @@
  *  linux/arch/arm/mm/proc-sa110.S
  *
  *  Copyright (C) 1997-2002 Russell King
+ *  Copyright (C) 2003 Hyok S. Choi <hyok.choi@samsung.com>
+ *  modified for NON-PAGED MMU version.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -81,7 +83,9 @@ ENTRY(cpu_sa110_reset)
 	mov	ip, #0
 	mcr	p15, 0, ip, c7, c7, 0		@ invalidate I,D caches
 	mcr	p15, 0, ip, c7, c10, 4		@ drain WB
+#ifdef CONFIG_MMU
 	mcr	p15, 0, ip, c8, c7, 0		@ invalidate I & D TLBs
+#endif
 	mrc	p15, 0, ip, c1, c0, 0		@ ctrl register
 	bic	ip, ip, #0x000f			@ ............wcam
 	bic	ip, ip, #0x1100			@ ...i...s........
@@ -144,14 +148,17 @@ ENTRY(cpu_sa110_dcache_clean_area)
  */
 	.align	5
 ENTRY(cpu_sa110_switch_mm)
+#ifdef CONFIG_MMU
 	flush_110_dcache	r3, ip, r1
 	mov	r1, #0
 	mcr	p15, 0, r1, c7, c5, 0		@ invalidate I cache
 	mcr	p15, 0, r1, c7, c10, 4		@ drain WB
 	mcr	p15, 0, r0, c2, c0, 0		@ load page table pointer
 	mcr	p15, 0, r1, c8, c7, 0		@ invalidate I & D TLBs
+#endif
 	mov	pc, lr
 
+#ifdef CONFIG_MMU
 /*
  * cpu_sa110_set_pte(ptep, pte)
  *
@@ -181,6 +188,7 @@ ENTRY(cpu_sa110_set_pte)
 	mcr	p15, 0, r0, c7, c10, 1		@ clean D entry
 	mcr	p15, 0, r0, c7, c10, 4		@ drain WB
 	mov	pc, lr
+#endif
 
 	__INIT
 
@@ -189,7 +197,9 @@ __sa110_setup:
 	mov	r10, #0
 	mcr	p15, 0, r10, c7, c7		@ invalidate I,D caches on v4
 	mcr	p15, 0, r10, c7, c10, 4		@ drain write buffer on v4
+#ifdef CONFIG_MMU
 	mcr	p15, 0, r10, c8, c7		@ invalidate I,D TLBs on v4
+#endif
 	mrc	p15, 0, r0, c1, c0		@ get control register v4
 	ldr	r5, sa110_cr1_clear
 	bic	r0, r0, r5
@@ -209,7 +219,11 @@ __sa110_setup:
 sa110_cr1_clear:
 	.word	0x3f3f
 sa110_cr1_set:
+#if defined(CONFIG_MMU) || defined(CONFIG_CPU_MXU_ENABLE)
 	.word	0x113d
+#else
+	.word	0x113c
+#endif
 
 	__INITDATA
 
@@ -227,7 +241,9 @@ ENTRY(sa110_processor_functions)
 	.word	cpu_sa110_do_idle
 	.word	cpu_sa110_dcache_clean_area
 	.word	cpu_sa110_switch_mm
+#ifdef CONFIG_MMU
 	.word	cpu_sa110_set_pte
+#endif
 	.size	sa110_processor_functions, . - sa110_processor_functions
 
 	.section ".rodata"
@@ -255,18 +271,22 @@ cpu_sa110_name:
 __sa110_proc_info:
 	.long	0x4401a100
 	.long	0xfffffff0
+#if CONFIG_MMU
 	.long   PMD_TYPE_SECT | \
 		PMD_SECT_BUFFERABLE | \
 		PMD_SECT_CACHEABLE | \
 		PMD_SECT_AP_WRITE | \
 		PMD_SECT_AP_READ
+#endif
 	b	__sa110_setup
 	.long	cpu_arch_name
 	.long	cpu_elf_name
 	.long	HWCAP_SWP | HWCAP_HALF | HWCAP_26BIT | HWCAP_FAST_MULT
 	.long	cpu_sa110_name
 	.long	sa110_processor_functions
+#ifdef CONFIG_MMU
 	.long	v4wb_tlb_fns
 	.long	v4wb_user_fns
+#endif
 	.long	v4wb_cache_fns
 	.size	__sa110_proc_info, . - __sa110_proc_info

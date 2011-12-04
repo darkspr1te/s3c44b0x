@@ -219,9 +219,11 @@ sys_syscall:
 		ldrlo	pc, [tbl, scno, lsl #2]
 		b	sys_ni_syscall
 
+#ifdef CONFIG_MMU
 sys_fork_wrapper:
 		add	r0, sp, #S_OFF
 		b	sys_fork
+#endif
 
 sys_vfork_wrapper:
 		add	r0, sp, #S_OFF

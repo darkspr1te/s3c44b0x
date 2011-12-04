@@ -2,6 +2,7 @@
  *  linux/include/asm-arm/tlb.h
  *
  *  Copyright (C) 2002 Russell King
+ *  Modified for uClinux by Hyok S. Choi, 2004
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -19,6 +20,13 @@
 
 #include <asm/cacheflush.h>
 #include <asm/tlbflush.h>
+#ifndef CONFIG_MMU
+
+#include <linux/pagemap.h>
+#include <asm-generic/tlb.h>
+
+#else /* !CONFIG_MMU */
+
 #include <asm/pgalloc.h>
 
 /*
@@ -99,4 +107,5 @@ tlb_end_vma(struct mmu_gather *tlb, struct vm_area_struct *vma)
 
 #define tlb_migrate_finish(mm)		do { } while (0)
 
+#endif	/* CONFIG_MMU */
 #endif

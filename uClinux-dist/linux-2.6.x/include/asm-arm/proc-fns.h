@@ -3,6 +3,7 @@
  *
  *  Copyright (C) 1997-1999 Russell King
  *  Copyright (C) 2000 Deep Blue Solutions Ltd
+ *  Copyright (C) 2003 Hyok S. Choi, Samsung Electronics Co.,Ltd.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -34,6 +35,14 @@
 #   define CPU_NAME cpu_arm6
 #  endif
 # endif
+# ifdef CONFIG_CPU_ARM7TDMI
+#  ifdef CPU_NAME
+#   undef  MULTI_CPU
+#   define MULTI_CPU
+#  else
+#   define CPU_NAME cpu_arm7tdmi
+#  endif
+# endif
 # ifdef CONFIG_CPU_ARM710
 #  ifdef CPU_NAME
 #   undef  MULTI_CPU
@@ -42,12 +51,28 @@
 #   define CPU_NAME cpu_arm7
 #  endif
 # endif
+# ifdef CONFIG_CPU_S3C4510B
+#  ifdef CPU_NAME
+#   undef  MULTI_CPU
+#   define MULTI_CPU
+#  else
+#   define CPU_NAME cpu_s3c4510b
+#  endif
+# endif
 # ifdef CONFIG_CPU_ARM720T
 #  ifdef CPU_NAME
 #   undef  MULTI_CPU
 #   define MULTI_CPU
 #  else
 #   define CPU_NAME cpu_arm720
+#  endif
+# endif
+# ifdef CONFIG_CPU_ARM9TDMI
+#  ifdef CPU_NAME
+#   undef  MULTI_CPU
+#   define MULTI_CPU
+#  else
+#   define CPU_NAME cpu_arm9tdmi
 #  endif
 # endif
 # ifdef CONFIG_CPU_ARM920T
@@ -80,6 +105,14 @@
 #   define MULTI_CPU
 #  else
 #   define CPU_NAME cpu_arm926
+#  endif
+# endif
+# ifdef CONFIG_CPU_ARM940T
+#  ifdef CPU_NAME
+#   undef  MULTI_CPU
+#   define MULTI_CPU
+#  else
+#   define CPU_NAME cpu_arm940
 #  endif
 # endif
 # ifdef CONFIG_CPU_SA110
@@ -160,6 +193,7 @@
 
 #define cpu_switch_mm(pgd,mm) cpu_do_switch_mm(virt_to_phys(pgd),mm)
 
+#ifdef CONFIG_MMU
 #define cpu_get_pgd()	\
 	({						\
 		unsigned long pg;			\
@@ -168,6 +202,7 @@
 		pg &= ~0x3fff;				\
 		(pgd_t *)phys_to_virt(pg);		\
 	})
+#endif
 
 #endif /* __ASSEMBLY__ */
 #endif /* __KERNEL__ */

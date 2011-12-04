@@ -3,6 +3,7 @@
  *
  *  Copyright (C) 1995-2002 Russell King
  *  Fragments that appear the same as linux/arch/i386/kernel/traps.c (C) Linus Torvalds
+ *  Modified for uClinux 2005 Hyok S. Choi
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -605,7 +606,9 @@ baddataabort(int code, unsigned long instr, struct pt_regs *regs)
 		printk(KERN_ERR "[%d] %s: bad data abort: code %d instr 0x%08lx\n",
 			current->pid, current->comm, code, instr);
 		dump_instr(regs);
+#ifdef CONFIG_MMU 
 		show_pte(current->mm, addr);
+#endif 
 	}
 #endif
 
@@ -668,6 +671,16 @@ void abort(void)
 }
 EXPORT_SYMBOL(abort);
 
+#ifdef CONFIG_MMU
+ #define VECTORS_BASE (0xffff0000)
+#else
+ #ifndef CONFIG_REMAP_VECTORS_TO_RAM
+  #define VECTORS_BASE (0)
+ #else
+  #define VECTORS_BASE (CONFIG_DRAM_BASE)
+ #endif
+#endif	/* CONFIG_MMU */
+
 void __init trap_init(void)
 {
 	extern char __stubs_start[], __stubs_end[];
@@ -680,9 +693,9 @@ void __init trap_init(void)
 	 * into the vector page, mapped at 0xffff0000, and ensure these
 	 * are visible to the instruction stream.
 	 */
-	memcpy((void *)0xffff0000, __vectors_start, __vectors_end - __vectors_start);
-	memcpy((void *)0xffff0200, __stubs_start, __stubs_end - __stubs_start);
-	memcpy((void *)0xffff1000 - kuser_sz, __kuser_helper_start, kuser_sz);
+	memcpy((void *)VECTORS_BASE, __vectors_start, __vectors_end - __vectors_start);
+	memcpy((void *)VECTORS_BASE+0x0200, __stubs_start, __stubs_end - __stubs_start);
+	memcpy((void *)VECTORS_BASE+0x1000 - kuser_sz, __kuser_helper_start, kuser_sz);
 
 	/*
 	 * Copy signal return handlers into the vector page, and
@@ -691,6 +704,6 @@ void __init trap_init(void)
 	memcpy((void *)KERN_SIGRETURN_CODE, sigreturn_codes,
 	       sizeof(sigreturn_codes));
 
-	flush_icache_range(0xffff0000, 0xffff0000 + PAGE_SIZE);
+	flush_icache_range(VECTORS_BASE, VECTORS_BASE + PAGE_SIZE);
 	modify_domain(DOMAIN_USER, DOMAIN_CLIENT);
 }

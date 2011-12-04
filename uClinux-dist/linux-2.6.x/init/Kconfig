@@ -326,6 +326,7 @@ config BASE_FULL
 config FUTEX
 	bool "Enable futex support" if EMBEDDED
 	default y
+	depends on MMU
 	help
 	  Disabling this option will cause the kernel to be built without
 	  support for "fast userspace mutexes".  The resulting kernel may not
@@ -402,6 +403,7 @@ endmenu		# General setup
 
 config TINY_SHMEM
 	default !SHMEM
+	depends MMU
 	bool
 
 config BASE_SMALL

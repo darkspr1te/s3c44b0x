@@ -1,5 +1,6 @@
 #
 # Makefile for the linux kernel.
+# modified for uClinux by Hyok S. Choi, 2004
 #
 
 AFLAGS_head.o := -DTEXTADDR=$(TEXTADDR) -DDATAADDR=$(DATAADDR)
@@ -27,7 +28,6 @@ ifneq ($(CONFIG_ARCH_EBSA110),y)
   obj-y		+= io.o
 endif
 
-head-y			:= head.o
 obj-$(CONFIG_DEBUG_LL)	+= debug.o
 
-extra-y := $(head-y) init_task.o vmlinux.lds
+extra-y := $(HEAD) init_task.o vmlinux.lds

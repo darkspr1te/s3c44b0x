@@ -2,6 +2,7 @@
  *  linux/include/asm-arm/page.h
  *
  *  Copyright (C) 1995-2003 Russell King
+ *  Modified by Hyok S. Choi, 2004
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -26,6 +27,9 @@
 
 #include <asm/glue.h>
 
+#ifndef CONFIG_MMU
+#include "page-nommu.h"
+#else
 /*
  *	User Space Model
  *	================
@@ -159,6 +163,8 @@ typedef unsigned long pgprot_t;
 #define __pgprot(x)     (x)
 
 #endif /* STRICT_MM_TYPECHECKS */
+
+#endif /* CONFIG_MMU */
 
 /* the upper-most page table pointer */
 extern pmd_t *top_pmd;

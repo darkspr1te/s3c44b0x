@@ -2,6 +2,7 @@
  *  linux/include/asm-arm/cacheflush.h
  *
  *  Copyright (C) 1999-2002 Russell King
+ *  Copyright (C) 2004 Hyok S. Choi
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -40,6 +41,22 @@
 #  define MULTI_CACHE 1
 # else
 #  define _CACHE v4
+# endif
+#endif
+
+#if defined(CONFIG_CPU_ARM7TDMI) || defined(CONFIG_CPU_ARM9TDMI)
+# ifdef _CACHE
+#  define MULTI_CACHE 1
+# else
+#  define _CACHE v4
+# endif
+#endif
+
+#if defined(CONFIG_CPU_S3C4510B)
+# ifdef _CACHE
+#  define MULTI_CACHE 1
+# else
+#  define _CACHE s3c4510b
 # endif
 #endif
 
@@ -179,7 +196,9 @@ extern struct cpu_cache_fns cpu_cache;
 #define __cpuc_flush_user_all		cpu_cache.flush_user_all
 #define __cpuc_flush_user_range		cpu_cache.flush_user_range
 #define __cpuc_coherent_kern_range	cpu_cache.coherent_kern_range
+#ifdef CONFIG_MMU
 #define __cpuc_coherent_user_range	cpu_cache.coherent_user_range
+#endif
 #define __cpuc_flush_dcache_page	cpu_cache.flush_kern_dcache_page
 
 /*
@@ -198,14 +217,18 @@ extern struct cpu_cache_fns cpu_cache;
 #define __cpuc_flush_user_all		__glue(_CACHE,_flush_user_cache_all)
 #define __cpuc_flush_user_range		__glue(_CACHE,_flush_user_cache_range)
 #define __cpuc_coherent_kern_range	__glue(_CACHE,_coherent_kern_range)
+#ifdef CONFIG_MMU
 #define __cpuc_coherent_user_range	__glue(_CACHE,_coherent_user_range)
+#endif
 #define __cpuc_flush_dcache_page	__glue(_CACHE,_flush_kern_dcache_page)
 
 extern void __cpuc_flush_kern_all(void);
 extern void __cpuc_flush_user_all(void);
 extern void __cpuc_flush_user_range(unsigned long, unsigned long, unsigned int);
 extern void __cpuc_coherent_kern_range(unsigned long, unsigned long);
+#ifdef CONFIG_MMU
 extern void __cpuc_coherent_user_range(unsigned long, unsigned long);
+#endif
 extern void __cpuc_flush_dcache_page(void *);
 
 /*
@@ -224,6 +247,9 @@ extern void dmac_flush_range(unsigned long, unsigned long);
 
 #endif
 
+#ifndef CONFIG_MMU
+#include "cacheflush-nommu.h"
+#else
 /*
  * flush_cache_vmap() is used when creating mappings (eg, via vmap,
  * vmalloc, ioremap etc) in kernel space for pages.  Since the
@@ -251,11 +277,13 @@ extern void dmac_flush_range(unsigned long, unsigned long);
 		flush_cache_page(vma, vaddr, page_to_pfn(page));\
 		memcpy(dst, src, len);				\
 	} while (0)
+#endif
 
 /*
  * Convert calls to our calling convention.
  */
 #define flush_cache_all()		__cpuc_flush_kern_all()
+#ifdef CONFIG_MMU
 #ifndef CONFIG_CPU_CACHE_VIPT
 static inline void flush_cache_mm(struct mm_struct *mm)
 {
@@ -332,6 +360,8 @@ extern void flush_dcache_page(struct page *);
  * duplicate cache flushing elsewhere performed by flush_dcache_page().
  */
 #define flush_icache_page(vma,page)	do { } while (0)
+
+#endif /* CONFIG_MMU */
 
 #define __cacheid_present(val)		(val != read_cpuid(CPUID_ID))
 #define __cacheid_vivt(val)		((val & (15 << 25)) != (14 << 25))

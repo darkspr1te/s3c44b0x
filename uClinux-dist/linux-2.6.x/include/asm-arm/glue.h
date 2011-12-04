@@ -51,11 +51,35 @@
 # endif
 #endif
 
+#if defined(CONFIG_CPU_ARM7TDMI)
+# ifdef CPU_ABORT_HANDLER
+#  define MULTI_ABORT 1
+# else
+#  define CPU_ABORT_HANDLER cpu_arm7tdmi_data_abort
+# endif
+#endif
+
+#if defined(CONFIG_CPU_S3C4510B)
+# ifdef CPU_ABORT_HANDLER
+#  define MULTI_ABORT 1
+# else
+#  define CPU_ABORT_HANDLER cpu_s3c4510b_data_abort
+# endif
+#endif
+
 #if defined(CONFIG_CPU_ARM710)
 # ifdef CPU_ABORT_HANDLER
 #  define MULTI_ABORT 1
 # else
 #  define CPU_ABORT_HANDLER cpu_arm7_data_abort
+# endif
+#endif
+
+#if defined(CONFIG_CPU_ARM9TDMI)
+# ifdef CPU_ABORT_HANDLER
+#  define MULTI_ABORT 1
+# else
+#  define CPU_ABORT_HANDLER cpu_arm9tdmi_data_abort
 # endif
 #endif
 

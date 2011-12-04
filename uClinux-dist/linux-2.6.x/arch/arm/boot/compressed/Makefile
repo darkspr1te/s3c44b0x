@@ -42,6 +42,17 @@ ifeq ($(CONFIG_ARCH_SA1100),y)
 OBJS		+= head-sa1100.o
 endif
 
+ifeq ($(CONFIG_ARCH_S3C44B0),y)
+HEAD		= head-s3c44b0.o
+endif
+
+ifeq ($(CONFIG_ARCH_P2001),y)
+HEAD		= head-p2001.o
+endif
+
+ifeq ($(CONFIG_ARCH_ESPD_4510B),y)
+HEAD		= head-espd_4510b.o
+endif
 ifeq ($(CONFIG_CPU_XSCALE),y)
 OBJS		+= head-xscale.o
 endif

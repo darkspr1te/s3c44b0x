@@ -40,6 +40,11 @@ struct exception_table_entry
 
 extern int fixup_exception(struct pt_regs *regs);
 
+#ifndef CONFIG_MMU
+
+#include "uaccess-nommu.h"
+
+#else
 /*
  * Note that this is actually 0x1,0000,0000
  */
@@ -76,6 +81,8 @@ static inline void set_fs (mm_segment_t fs)
 	flag; })
 
 #define access_ok(type,addr,size)	(__range_ok(addr,size) == 0)
+
+#endif
 
 /*
  * Single-value transfer routines.  They automatically use the right
