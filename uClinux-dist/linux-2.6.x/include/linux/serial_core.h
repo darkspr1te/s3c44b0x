@@ -65,6 +65,9 @@
 /* Parisc type numbers. */
 #define PORT_MUX	48
 
+/* Motorola ColdFire */
+#define	PORT_MCF	49
+
 /* Macintosh Zilog type numbers */
 #define PORT_MAC_ZILOG	50	/* m68k : not yet implemented */
 #define PORT_PMAC_ZILOG	51
@@ -88,6 +91,12 @@
 
 /* MPC52xx type numbers */
 #define PORT_MPC52xx	59
+
+/* JTAG emulation port types */
+#define PORT_T32_JTAG1	60
+
+/* Samsung S3C4510B */
+#define PORT_S3C4510B   61
 
 #ifdef __KERNEL__
 

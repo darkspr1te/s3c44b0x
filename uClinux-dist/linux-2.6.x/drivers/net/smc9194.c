@@ -59,9 +59,11 @@ static const char version[] =
 
 #include <linux/module.h>
 #include <linux/kernel.h>
+#include <linux/sched.h>
 #include <linux/types.h>
 #include <linux/fcntl.h>
 #include <linux/interrupt.h>
+#include <linux/ptrace.h>
 #include <linux/ioport.h>
 #include <linux/in.h>
 #include <linux/slab.h>
@@ -72,11 +74,45 @@ static const char version[] =
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>
 #include <linux/skbuff.h>
+#include <linux/delay.h>
 
 #include <asm/bitops.h>
 #include <asm/io.h>
 
 #include "smc9194.h"
+
+#ifdef CONFIG_M68EZ328
+#include <asm/MC68EZ328.h>
+#include <asm/irq.h>
+#include <asm/mcfsmc.h>
+unsigned char	smc_defethaddr[] = { 0x00, 0x10, 0x8b, 0xf1, 0xda, 0x01 };
+#define NO_AUTOPROBE
+#endif
+
+#ifdef CONFIG_COLDFIRE
+#include <asm/coldfire.h>
+#include <asm/mcfsim.h>
+#include <asm/mcfsmc.h>
+
+unsigned char	smc_defethaddr[] = { 0x00, 0xd0, 0xcf, 0x00, 0x00, 0x01 };
+
+#define NO_AUTOPROBE
+#endif
+
+#ifdef CONFIG_SH_KEYWEST
+#include <asm/keywest.h>
+#define NO_AUTOPROBE
+#define PHY_SETUP
+#endif
+
+#ifdef CONFIG_LEDMAN
+#include <linux/ledman.h>
+#endif
+
+#if defined(CONFIG_CPU_H8300H) || defined(CONFIG_CPU_H8S)
+#include <asm/h8300_smsc.h>
+#define NO_AUTOPROBE
+#endif
 
 #define DRV_NAME "smc9194"
 
@@ -90,7 +126,8 @@ static const char version[] =
  . Do you want to use 32 bit xfers?  This should work on all chips, as
  . the chipset is designed to accommodate them.
 */
-#ifdef __sh__
+#if (defined(__sh__) && !defined(CONFIG_SH_KEYWEST)) || \
+    defined(__H8300H__) || defined(__H8300S__)
 #undef USE_32_BIT
 #else
 #define USE_32_BIT 1
@@ -105,17 +142,37 @@ static const char version[] =
 #endif
 
 /*
+ .A typedef so we can change what IO looks like easily
+*/
+typedef unsigned int smcio_t;
+
+/*
  .the SMC9194 can be at any of the following port addresses.  To change,
  .for a slightly different card, you can add it to the array.  Keep in
  .mind that the array must end in zero.
 */
+#if defined(CONFIG_COLDFIRE) || defined(CONFIG_M68EZ328) || \
+	defined(CONFIG_SH_KEYWEST)
 
-struct devlist {
-	unsigned int port;
-	unsigned int irq;
-};
+#ifdef CONFIG_NETtel
+static smcio_t smc_portlist[]      = { 0x30600300, 0x30600000, 0 };
+static unsigned int smc_irqlist[]  = {         29,         27, 0 };
+#elif defined(CONFIG_SH_KEYWEST)
+static smcio_t smc_portlist[]      = { KEYWEST_ETHR, 0 };
+static unsigned int smc_irqlist[]  = { IRQ4_IRQ,     0 };
+#elif defined(CONFIG_M68EZ328)
+/* make sure that you program Port D selects to allow the interrupts! */
+static smcio_t smc_portlist[]      = { 0x2000300,    0x2000320,    0 };
+static unsigned int smc_irqlist[]  = { IRQ1_IRQ_NUM, IRQ2_IRQ_NUM, 0 };
+#elif defined(CONFIG_CLEOPATRA)
+static unsigned int smc_portlist[] = { 0x30600300, 0 };
+static unsigned int smc_irqlist[]  = {         29, 0 };
+#else
+static smcio_t smc_portlist[]      = { 0x30600300, 0 };
+static unsigned int smc_irqlist[]  = {         27, 0 };
+#endif
 
-#if defined(CONFIG_H8S_EDOSK2674)
+#elif defined(CONFIG_H8S_EDOSK2674)
 static struct devlist smc_devlist[] __initdata = {
 	{.port = 0xf80000, .irq = 16},
 	{.port = 0,        .irq = 0 },
@@ -294,7 +351,7 @@ static inline void smc_tx( struct net_device * dev );
  . Test if a given location contains a chip, trying to cause as
  . little damage as possible if it's not a SMC chip.
 */
-static int smc_probe(struct net_device *dev, int ioaddr);
+static int smc_probe(struct net_device *dev, smcio_t ioaddr);
 
 /*
  . A rather simple routine to print out a packet for debugging purposes.
@@ -315,20 +372,31 @@ static void smc_hardware_send_packet( struct net_device * dev );
 static int  smc_wait_to_send_packet( struct sk_buff * skb, struct net_device *dev );
 
 /* this does a soft reset on the device */
-static void smc_reset( int ioaddr );
+static void smc_reset( smcio_t ioaddr );
 
 /* Enable Interrupts, Receive, and Transmit */
-static void smc_enable( int ioaddr );
+static void smc_enable( smcio_t ioaddr );
 
 /* this puts the device in an inactive state */
-static void smc_shutdown( int ioaddr );
+static void smc_shutdown( smcio_t ioaddr );
 
+#ifndef NO_AUTOPROBE
 /* This routine will find the IRQ of the driver if one is not
  . specified in the input to the device.  */
-static int smc_findirq( int ioaddr );
+static int smc_findirq( smcio_t ioaddr );
+#endif
+
+#ifdef PHY_SETUP
+static void clkmdio(smcio_t ioaddr, unsigned int MGMTData);
+static unsigned PHYAccess(smcio_t ioaddr, unsigned char PHYAdd,
+				unsigned char RegAdd, unsigned char OPCode, unsigned wData);
+static unsigned char DetectPHY(smcio_t ioaddr, unsigned long *OUI,
+						unsigned char *Model, unsigned char *Revision);
+static int setup_phy(smcio_t ioaddr);
+#endif
 
 /*
- . Function: smc_reset( int ioaddr )
+ . Function: smc_reset( smcio_t ioaddr )
  . Purpose:
  .  	This sets the SMC91xx chip to its normal state, hopefully from whatever
  . 	mess that any other DOS driver has put it in.
@@ -344,7 +412,7 @@ static int smc_findirq( int ioaddr );
  .	5.  clear all interrupts
  .
 */
-static void smc_reset( int ioaddr )
+static void smc_reset( smcio_t ioaddr )
 {
 	/* This resets the registers mostly to defaults, but doesn't
 	   affect EEPROM.  That seems unnecessary */
@@ -365,6 +433,10 @@ static void smc_reset( int ioaddr )
 	SMC_SELECT_BANK( 1 );
 	outw( inw( ioaddr + CONTROL ) | CTL_AUTO_RELEASE , ioaddr + CONTROL );
 
+#if defined(CONFIG_LEDMAN) && defined(CONFIG_SNAPGEAR)
+	outw( inw( ioaddr + CONTROL ) | CTL_LE_ENABLE , ioaddr + CONTROL );	
+#endif
+
 	/* Reset the MMU */
 	SMC_SELECT_BANK( 2 );
 	outw( MC_RESET, ioaddr + MMU_CMD );
@@ -373,7 +445,7 @@ static void smc_reset( int ioaddr )
 	   but this is a place where future chipsets _COULD_ break.  Be wary
  	   of issuing another MMU command right after this */
 
-	outb( 0, ioaddr + INT_MASK );
+	SMC_SET_INT( 0 );
 }
 
 /*
@@ -384,7 +456,7 @@ static void smc_reset( int ioaddr )
  .	2.  Enable the receiver
  .	3.  Enable interrupts
 */
-static void smc_enable( int ioaddr )
+static void smc_enable( smcio_t ioaddr )
 {
 	SMC_SELECT_BANK( 0 );
 	/* see the header file for options in TCR/RCR NORMAL*/
@@ -393,7 +465,7 @@ static void smc_enable( int ioaddr )
 
 	/* now, enable interrupts */
 	SMC_SELECT_BANK( 2 );
-	outb( SMC_INTERRUPT_MASK, ioaddr + INT_MASK );
+	SMC_SET_INT( SMC_INTERRUPT_MASK );
 }
 
 /*
@@ -410,16 +482,21 @@ static void smc_enable( int ioaddr )
  .	the manual says that it will wake up in response to any I/O requests
  .	in the register space.   Empirical results do not show this working.
 */
-static void smc_shutdown( int ioaddr )
+static void smc_shutdown( smcio_t ioaddr )
 {
 	/* no more interrupts for me */
 	SMC_SELECT_BANK( 2 );
-	outb( 0, ioaddr + INT_MASK );
+	SMC_SET_INT( 0 );
 
 	/* and tell the card to stay away from that nasty outside world */
 	SMC_SELECT_BANK( 0 );
+#if defined(CONFIG_COLDFIRE) || defined(CONFIG_M68EZ328)
+	outw( RCR_CLEAR, ioaddr + RCR );
+	outw( TCR_CLEAR, ioaddr + TCR );
+#else
 	outb( RCR_CLEAR, ioaddr + RCR );
 	outb( TCR_CLEAR, ioaddr + TCR );
+#endif /* CONFIG_COLDFIRE */
 #if 0
 	/* finally, shut the chip down */
 	SMC_SELECT_BANK( 1 );
@@ -429,7 +506,7 @@ static void smc_shutdown( int ioaddr )
 
 
 /*
- . Function: smc_setmulticast( int ioaddr, int count, dev_mc_list * adds )
+ . Function: smc_setmulticast( smcio_t ioaddr, int count, dev_mc_list * adds )
  . Purpose:
  .    This sets the internal hardware table to filter out unwanted multicast
  .    packets before they take up memory.
@@ -446,7 +523,7 @@ static void smc_shutdown( int ioaddr )
 */
 
 
-static void smc_setmulticast( int ioaddr, int count, struct dev_mc_list * addrs ) {
+static void smc_setmulticast( smcio_t ioaddr, int count, struct dev_mc_list * addrs ) {
 	int			i;
 	unsigned char		multicast_table[ 8 ];
 	struct dev_mc_list	* cur_addr;
@@ -479,10 +556,17 @@ static void smc_setmulticast( int ioaddr, int count, struct dev_mc_list * addrs 
 	/* now, the table can be loaded into the chipset */
 	SMC_SELECT_BANK( 3 );
 
+#if defined(CONFIG_COLDFIRE) || defined(CONFIG_M68EZ328)
+	for ( i = 0; i < 8 ; i += 2 ) {
+		outw(((multicast_table[i+1]<<8)+(multicast_table[i])), ioaddr+MULTICAST1+i );
+	}
+#else
 	for ( i = 0; i < 8 ; i++ ) {
 		outb( multicast_table[i], ioaddr + MULTICAST1 + i );
 	}
+#endif
 }
+
 
 /*
  . Function: smc_wait_to_send_packet( struct sk_buff * skb, struct net_device * )
@@ -518,18 +602,18 @@ static int smc_wait_to_send_packet( struct sk_buff * skb, struct net_device * de
 		printk(CARDNAME": Bad Craziness - sent packet while busy.\n" );
 		return 1;
 	}
-	lp->saved_skb = skb;
 
 	length = skb->len;
 
-	if (length < ETH_ZLEN) {
+	if(length < ETH_ZLEN) {
 		skb = skb_padto(skb, ETH_ZLEN);
-		if (skb == NULL) {
+		if(skb == NULL) {
 			netif_wake_queue(dev);
 			return 0;
 		}
 		length = ETH_ZLEN;
 	}
+	lp->saved_skb = skb;
 		
 	/*
 	** The MMU wants the number of pages to be the number of 256 bytes
@@ -575,7 +659,7 @@ static int smc_wait_to_send_packet( struct sk_buff * skb, struct net_device * de
 		status = inb( ioaddr + INTERRUPT );
 		if ( status & IM_ALLOC_INT ) {
 			/* acknowledge the interrupt */
-			outb( IM_ALLOC_INT, ioaddr + INTERRUPT );
+			SMC_ACK_INT( IM_ALLOC_INT );
   			break;
 		}
    	} while ( -- time_out );
@@ -617,7 +701,7 @@ static void smc_hardware_send_packet( struct net_device * dev )
 	byte	 		packet_no;
 	struct sk_buff * 	skb = lp->saved_skb;
 	word			length;
-	unsigned int		ioaddr;
+	smcio_t			ioaddr;
 	byte			* buf;
 
 	ioaddr = dev->base_addr;
@@ -641,7 +725,11 @@ static void smc_hardware_send_packet( struct net_device * dev )
 	}
 
 	/* we have a packet address, so tell the card to use it */
+#if defined(CONFIG_COLDFIRE) || defined(CONFIG_M68EZ328)
+	outw( packet_no, ioaddr + PNR_ARR );
+#else
 	outb( packet_no, ioaddr + PNR_ARR );
+#endif
 
 	/* point to the beginning of the packet */
 	outw( PTR_AUTOINC , ioaddr + POINTER );
@@ -653,13 +741,22 @@ static void smc_hardware_send_packet( struct net_device * dev )
 
 	/* send the packet length ( +6 for status, length and ctl byte )
  	   and the status word ( set to zeros ) */
+
 #ifdef USE_32_BIT
+#if defined(CONFIG_COLDFIRE) || defined(CONFIG_M68EZ328)
+	outl(  (length +6 ) , ioaddr + DATA_1 );
+#else
 	outl(  (length +6 ) << 16 , ioaddr + DATA_1 );
+#endif
 #else
 	outw( 0, ioaddr + DATA_1 );
 	/* send the packet length ( +6 for status words, length, and ctl*/
+#if defined(CONFIG_COLDFIRE) || defined(CONFIG_M68EZ328) || defined(CONFIG_CPU_H8S)
+	outw( (length+6) & 0xFFFF, ioaddr + DATA_1 );
+#else
 	outb( (length+6) & 0xFF,ioaddr + DATA_1 );
 	outb( (length+6) >> 8 , ioaddr + DATA_1 );
+#endif
 #endif
 
 	/* send the actual data
@@ -672,7 +769,9 @@ static void smc_hardware_send_packet( struct net_device * dev )
 #ifdef USE_32_BIT
 	if ( length & 0x2  ) {
 		outsl(ioaddr + DATA_1, buf,  length >> 2 );
-#if !defined(__H8300H__) && !defined(__H8300S__)
+#if defined(CONFIG_COLDFIRE) || defined(CONFIG_M68EZ328)
+		outwd( *((word *)(buf + (length & 0xFFFFFFFC))),ioaddr +DATA_1);
+#elif !defined(__H8300H__) && !defined(__H8300S__)
 		outw( *((word *)(buf + (length & 0xFFFFFFFC))),ioaddr +DATA_1);
 #else
 		ctrl_outw( *((word *)(buf + (length & 0xFFFFFFFC))),ioaddr +DATA_1);
@@ -688,8 +787,12 @@ static void smc_hardware_send_packet( struct net_device * dev )
 	if ( (length & 1) == 0 ) {
 		outw( 0, ioaddr + DATA_1 );
 	} else {
+#if defined(CONFIG_COLDFIRE) || defined(CONFIG_M68EZ328)
+		outw( buf[length -1 ] | (0x20 << 8), ioaddr + DATA_1);
+#else
 		outb( buf[length -1 ], ioaddr + DATA_1 );
 		outb( 0x20, ioaddr + DATA_1);
+#endif
 	}
 
 	/* enable the interrupts */
@@ -755,8 +858,11 @@ struct net_device * __init smc_init(int unit)
 	} else if (io != 0) {	/* Don't probe at all. */
 		err = -ENXIO;
 	} else {
-		for (;smcdev->port; smcdev++) {
-			if (smc_probe(dev, smcdev->port) == 0)
+		for (port = smc_portlist; *port; port++) {
+#ifdef CONFIG_NETtel
+			smc_remap(port);
+#endif
+			if (smc_probe(dev, *port) == 0)
 				break;
 		}
 		if (!smcdev->port)
@@ -783,12 +889,20 @@ out:
  . interrupt, so an auto-detect routine can detect it, and find the IRQ,
  ------------------------------------------------------------------------
 */
-int __init smc_findirq( int ioaddr )
+#ifndef NO_AUTOPROBE
+int __init smc_findirq( smcio_t ioaddr )
 {
 #ifndef NO_AUTOPROBE
 	int	timeout = 20;
 	unsigned long cookie;
 
+
+#if 0
+	/* I have to do a STI() here, because this is called from
+	   a routine that does an CLI during this process, making it
+	   rather difficult to get interrupts for auto detection */
+	sti();
+#endif
 
 	cookie = probe_irq_on();
 
@@ -801,7 +915,7 @@ int __init smc_findirq( int ioaddr )
 
 	SMC_SELECT_BANK(2);
 	/* enable ALLOCation interrupts ONLY */
-	outb( IM_ALLOC_INT, ioaddr + INT_MASK );
+	SMC_SET_INT( IM_ALLOC_INT );
 
 	/*
  	 . Allocate 512 bytes of memory.  Note that the chip was just
@@ -836,7 +950,13 @@ int __init smc_findirq( int ioaddr )
 	SMC_DELAY();
 
 	/* and disable all interrupts again */
-	outb( 0, ioaddr + INT_MASK );
+	SMC_SET_INT( 0 );
+
+#if 0
+	/* clear hardware interrupts again, because that's how it
+	   was when I was called... */
+	cli();
+#endif
 
 	/* and return what I found */
 	return probe_irq_off(cookie);
@@ -849,9 +969,10 @@ int __init smc_findirq( int ioaddr )
 	return 0;
 #endif
 }
+#endif /* NO_AUTOPROBE */
 
 /*----------------------------------------------------------------------
- . Function: smc_probe( int ioaddr )
+ . Function: smc_probe( smcio_t ioaddr )
  .
  . Purpose:
  .	Tests to see if a given ioaddr points to an SMC9xxx chip.
@@ -879,11 +1000,17 @@ int __init smc_findirq( int ioaddr )
  . o  GRAB the region
  .-----------------------------------------------------------------
 */
-static int __init smc_probe(struct net_device *dev, int ioaddr)
+static int __init smc_probe(struct net_device *dev, smcio_t ioaddr)
 {
 	int i, memory, retval;
 	static unsigned version_printed;
 	unsigned int bank;
+#if defined(CONFIG_NETtel) || defined(CONFIG_eLIA) || defined(CONFIG_DISKtel) || defined(CONFIG_CLEOPATRA)
+	static int nr = 0;
+#endif
+#if defined(CONFIG_COLDFIRE) || defined(CONFIG_M68EZ328)
+	unsigned char *ep;
+#endif
 
 	const char *version_string;
 	const char *if_string;
@@ -895,9 +1022,18 @@ static int __init smc_probe(struct net_device *dev, int ioaddr)
 	word memory_info_register;
 	word memory_cfg_register;
 
+#if !defined(CONFIG_COLDFIRE) && !defined(CONFIG_M68EZ328) && \
+    !defined(CONFIG_CPU_H8300H) && !defined(CONFIG_CPU_H8S)
 	/* Grab the region so that no one else tries to probe our ioports. */
 	if (!request_region(ioaddr, SMC_IO_EXTENT, DRV_NAME))
 		return -EBUSY;
+#elif defined(CONFIG_COLDFIRE)
+	/*
+	 *	We need to put the SMC into 68k mode.
+	 *	Do a write before anything else.
+	 */
+	outw(0, ioaddr + BANK_SELECT);
+#endif
 
 	dev->irq = irq;
 	dev->if_port = ifport;
@@ -916,13 +1052,13 @@ static int __init smc_probe(struct net_device *dev, int ioaddr)
 		retval = -ENODEV;
 		goto err_out;
 	}
-#if !defined(CONFIG_H8S_EDOSK2674)
 	/* well, we've already written once, so hopefully another time won't
  	   hurt.  This time, I need to switch the bank register to bank 1,
 	   so I can access the base address register */
+#if !defined(CONFIG_CPU_H8300H) && !defined(CONFIG_CPU_H8S)
 	SMC_SELECT_BANK(1);
 	base_address_register = inw( ioaddr + BASE );
-	if ( ioaddr != ( base_address_register >> 3 & 0x3E0 ) )  {
+	if ( (ioaddr & 0x3E0) != ( base_address_register >> 3 & 0x3E0 ) )  {
 		printk(CARDNAME ": IOADDR %x doesn't match configuration (%x)."
 			"Probably not a SMC chip\n",
 			ioaddr, base_address_register >> 3 & 0x3E0 );
@@ -934,7 +1070,6 @@ static int __init smc_probe(struct net_device *dev, int ioaddr)
 #else
 	(void)base_address_register; /* Warning suppression */
 #endif
-
 
 	/*  check if the revision register is something that I recognize.
 	    These might need to be added to later, as future revisions
@@ -953,12 +1088,29 @@ static int __init smc_probe(struct net_device *dev, int ioaddr)
 	/* at this point I'll assume that the chip is an SMC9xxx.
 	   It might be prudent to check a listing of MAC addresses
 	   against the hardware address, or do some other tests. */
-
 	if (version_printed++ == 0)
 		printk("%s", version);
 
 	/* fill in some of the fields */
 	dev->base_addr = ioaddr;
+
+#if defined(CONFIG_COLDFIRE) || defined(CONFIG_M68EZ328)
+#if defined(CONFIG_NETtel) || defined(CONFIG_eLIA) || defined(CONFIG_DISKtel) || defined(CONFIG_CLEOPATRA)
+	/*
+	 . MAC address should be in FLASH, check that it is valid.
+	 . If good use it, otherwise use the default.
+	*/
+	ep = (unsigned char *) (0xf0006000 + (nr++ * 6));
+	if ((ep[0] == 0xff) && (ep[1] == 0xff) && (ep[2] == 0xff) &&
+	    (ep[3] == 0xff) && (ep[4] == 0xff) && (ep[5] == 0xff))
+		ep = (unsigned char *) &smc_defethaddr[0];
+	else if ((ep[0] == 0) && (ep[1] == 0) && (ep[2] == 0) &&
+	    (ep[3] == 0) && (ep[4] == 0) && (ep[5] == 0))
+		ep = (unsigned char *) &smc_defethaddr[0];
+#else
+	ep = (unsigned char *) &smc_defethaddr[0];
+#endif
+#endif
 
 	/*
  	 . Get the MAC address ( bank 1, regs 4 - 9 )
@@ -967,10 +1119,22 @@ static int __init smc_probe(struct net_device *dev, int ioaddr)
 	for ( i = 0; i < 6; i += 2 ) {
 		word	address;
 
+#if defined(CONFIG_COLDFIRE) || defined(CONFIG_M68EZ328)
+		dev->dev_addr[ i ] = ep[ i ];
+		dev->dev_addr[ i + 1 ] = ep[ i + 1 ];
+		address = (((word) ep[ i ]) << 8) | ep[ i + 1 ];
+		outw( address, ioaddr + ADDR0 + i);
+#else
 		address = inw( ioaddr + ADDR0 + i  );
 		dev->dev_addr[ i + 1] = address >> 8;
-		dev->dev_addr[ i ] = address & 0xFF;
+		dev->dev_addr[ i ] = address & 0xFF;	
+#endif
 	}
+
+#if defined(CONFIG_COLDFIRE) || defined(CONFIG_M68EZ328)
+	/* HACK: to support 2 ethernets when using default address! */
+	smc_defethaddr[5]++;
+#endif
 
 	/* get the memory information */
 
@@ -1024,6 +1188,7 @@ static int __init smc_probe(struct net_device *dev, int ioaddr)
 	 . what (s)he is doing.  No checking is done!!!!
  	 .
 	*/
+#ifndef NO_AUTOPROBE
 	if ( dev->irq < 2 ) {
 		int	trials;
 
@@ -1041,6 +1206,13 @@ static int __init smc_probe(struct net_device *dev, int ioaddr)
 		retval = -ENODEV;
 		goto err_out;
 	}
+#else
+	if (dev->irq == 0 ) {
+		printk(CARDNAME
+		": Autoprobing IRQs is not supported for this configuration.\n");
+		return -ENODEV;
+	}
+#endif
 
 	/* now, print out the card info, in a short format.. */
 
@@ -1059,12 +1231,21 @@ static int __init smc_probe(struct net_device *dev, int ioaddr)
 	memset(dev->priv, 0, sizeof(struct smc_local));
 
 	/* Grab the IRQ */
-      	retval = request_irq(dev->irq, &smc_interrupt, 0, DRV_NAME, dev);
-      	if (retval) {
-		printk("%s: unable to get IRQ %d (irqval=%d).\n", DRV_NAME,
+#ifdef CONFIG_COLDFIRE
+	mcf_autovector(dev->irq);
+    retval = request_irq(dev->irq, &smc_interrupt, 0, dev->name, dev);
+#elif defined(CONFIG_M68EZ328) && !defined(CONFIG_CWEZ328) && !defined(CONFIG_CWVZ328)
+	retval = request_irq(IRQ_MACHSPEC | dev->irq, &smc_interrupt,
+			IRQ_FLG_STD, dev->name, dev);
+	if (retval) panic("Unable to attach Lan91C96 intr\n");
+#else
+	retval = request_irq(dev->irq, &smc_interrupt, 0, DRV_NAME, dev);
+#endif
+	if (retval) {
+		printk("%s: unable to get IRQ %d (irqval=%d).\n", dev->name,
 			dev->irq, retval);
   	  	goto err_out;
-      	}
+	}
 
 	dev->open		        = smc_open;
 	dev->stop		        = smc_close;
@@ -1074,6 +1255,9 @@ static int __init smc_probe(struct net_device *dev, int ioaddr)
 	dev->get_stats			= smc_query_statistics;
 	dev->set_multicast_list 	= smc_set_multicast_list;
 
+#ifdef PHY_SETUP
+	setup_phy( ioaddr );
+#endif
 	return 0;
 
 err_out:
@@ -1126,7 +1310,7 @@ static void print_packet( byte * buf, int length )
  */
 static int smc_open(struct net_device *dev)
 {
-	int	ioaddr = dev->base_addr;
+	smcio_t	ioaddr = dev->base_addr;
 
 	int	i;	/* used to set hw ethernet address */
 
@@ -1141,6 +1325,11 @@ static int smc_open(struct net_device *dev)
 	/* Select which interface to use */
 
 	SMC_SELECT_BANK( 1 );
+#if defined(CONFIG_DISKtel) || defined(CONFIG_SH_KEYWEST)
+	/* Setup to use external PHY on smc91c110 */
+	outw( inw( ioaddr + CONFIG ) | CFG_NO_WAIT | CFG_MII_SELECT,
+		(ioaddr + CONFIG ));
+#else
 	if ( dev->if_port == 1 ) {
 		outw( inw( ioaddr + CONFIG ) & ~CFG_AUI_SELECT,
 			ioaddr + CONFIG );
@@ -1149,6 +1338,7 @@ static int smc_open(struct net_device *dev)
 		outw( inw( ioaddr + CONFIG ) | CFG_AUI_SELECT,
 			ioaddr + CONFIG );
 	}
+#endif
 
 	/*
   		According to Becker, I have to set the hardware address
@@ -1165,6 +1355,18 @@ static int smc_open(struct net_device *dev)
 	}
 	
 	netif_start_queue(dev);
+
+#if defined(CONFIG_LEDMAN) && defined(CONFIG_SNAPGEAR)
+	/*
+	 *	fix the link status LED's
+	 */
+	SMC_SELECT_BANK( 0 );
+	ledman_cmd((inw(ioaddr + EPH_STATUS) & ES_LINK_OK) == ES_LINK_OK ?
+			LEDMAN_CMD_ON : LEDMAN_CMD_OFF,
+			strcmp(dev->name, "eth0") ?
+					LEDMAN_LAN2_LINK : LEDMAN_LAN1_LINK);
+#endif
+
 	return 0;
 }
 
@@ -1206,10 +1408,9 @@ static void smc_timeout(struct net_device *dev)
 static void smc_rcv(struct net_device *dev)
 {
 	struct smc_local *lp = netdev_priv(dev);
-	int 	ioaddr = dev->base_addr;
-	int 	packet_number;
-	word	status;
-	word	packet_length;
+	int ioaddr = dev->base_addr;
+	int packet_number;
+	word status, packet_length;
 
 	/* assume bank 2 */
 
@@ -1226,8 +1427,16 @@ static void smc_rcv(struct net_device *dev)
 	outw( PTR_READ | PTR_RCV | PTR_AUTOINC, ioaddr + POINTER );
 
 	/* First two words are status and packet_length */
+#ifndef CONFIG_SH_KEYWEST
 	status 		= inw( ioaddr + DATA_1 );
 	packet_length 	= inw( ioaddr + DATA_1 );
+#else
+	{
+		unsigned int l = inl( ioaddr + DATA_1 );
+		status         = l & 0xffff;
+		packet_length  = l >> 16;
+	}
+#endif
 
 	packet_length &= 0x07ff;  /* mask off top bits */
 
@@ -1278,8 +1487,16 @@ static void smc_rcv(struct net_device *dev)
 			packet_length >> 2, packet_length & 3 ));
 		insl(ioaddr + DATA_1 , data, packet_length >> 2 );
 		/* read the left over bytes */
+#ifndef CONFIG_SH_KEYWEST
 		insb( ioaddr + DATA_1, data + (packet_length & 0xFFFFFC),
 			packet_length & 0x3  );
+#else
+		if (packet_length & 3) {
+			union { unsigned int l; char data[4]; } l;
+			l.l = inl(ioaddr + DATA_1);
+			memcpy(data + (packet_length & ~0x3), l.data, packet_length & 0x3);
+		}
+#endif
 #else
 		PRINTK3((" Reading %d words and %d byte(s) \n",
 			(packet_length >> 1 ), packet_length & 1 ));
@@ -1331,7 +1548,7 @@ done:
  ************************************************************************/
 static void smc_tx( struct net_device * dev )
 {
-	int	ioaddr = dev->base_addr;
+	int ioaddr = dev->base_addr;
 	struct smc_local *lp = netdev_priv(dev);
 	byte saved_packet;
 	byte packet_no;
@@ -1345,7 +1562,12 @@ static void smc_tx( struct net_device * dev )
 	packet_no &= 0x7F;
 
 	/* select this as the packet to read from */
-	outb( packet_no, ioaddr + PNR_ARR );
+#if defined(CONFIG_COLDFIRE) || defined(CONFIG_M68EZ328)
+	outw( packet_no, ioaddr + PNR_ARR ); 
+#else
+	outb( packet_no, ioaddr + PNR_ARR ); 
+#endif
+	
 
 	/* read the first word from this packet */
 	outw( PTR_AUTOINC | PTR_READ, ioaddr + POINTER );
@@ -1356,8 +1578,10 @@ static void smc_tx( struct net_device * dev )
 	lp->stats.tx_errors++;
 	if ( tx_status & TS_LOSTCAR ) lp->stats.tx_carrier_errors++;
 	if ( tx_status & TS_LATCOL  ) {
+#if 0
 		printk(KERN_DEBUG CARDNAME
 			": Late collision occurred on last xmit.\n");
+#endif
 		lp->stats.tx_window_errors++;
 	}
 #if 0
@@ -1378,7 +1602,11 @@ static void smc_tx( struct net_device * dev )
 	/* one less packet waiting for me */
 	lp->packets_waiting--;
 
+#if defined(CONFIG_COLDFIRE) || defined(CONFIG_M68EZ328)
+	outw( saved_packet, ioaddr + PNR_ARR );
+#else
 	outb( saved_packet, ioaddr + PNR_ARR );
+#endif
 	return;
 }
 
@@ -1524,6 +1752,11 @@ static int smc_close(struct net_device *dev)
 	/* clear everything */
 	smc_shutdown( dev->base_addr );
 
+#if defined(CONFIG_LEDMAN) && defined(CONFIG_SNAPGEAR)
+	ledman_cmd(LEDMAN_CMD_OFF,
+		strcmp(dev->name, "eth0")?LEDMAN_LAN2_LINK : LEDMAN_LAN1_LINK);
+#endif
+
 	/* Update the statistics here. */
 	return 0;
 }
@@ -1548,7 +1781,7 @@ static struct net_device_stats* smc_query_statistics(struct net_device *dev) {
 */
 static void smc_set_multicast_list(struct net_device *dev)
 {
-	short ioaddr = dev->base_addr;
+	smcio_t ioaddr = dev->base_addr;
 
 	SMC_SELECT_BANK(0);
 	if ( dev->flags & IFF_PROMISC )
@@ -1595,6 +1828,12 @@ static void smc_set_multicast_list(struct net_device *dev)
 	}
 }
 
+#ifdef PHY_SETUP
+static int phy_delay1 = 4;
+static int phy_delay2 = 1;
+static int phy_delay3 = 100;
+#endif
+
 #ifdef MODULE
 
 static struct net_device *devSMC9194;
@@ -1607,12 +1846,25 @@ MODULE_PARM_DESC(io, "SMC 99194 I/O base address");
 MODULE_PARM_DESC(irq, "SMC 99194 IRQ number");
 MODULE_PARM_DESC(ifport, "SMC 99194 interface port (0-default, 1-TP, 2-AUI)");
 
+#ifdef PHY_SETUP
+MODULE_PARM(phy_delay1, "i");
+MODULE_PARM(phy_delay2, "i");
+MODULE_PARM(phy_delay3, "i");
+MODULE_PARM_DESC(phy_delay1, "Per MII clock delay [4]");
+MODULE_PARM_DESC(phy_delay2, "General delay [1]");
+MODULE_PARM_DESC(phy_delay3, "pre probe delay [100]");
+#endif
+
 int init_module(void)
 {
 	if (io == 0)
 		printk(KERN_WARNING
 		CARDNAME": You shouldn't use auto-probing with insmod!\n" );
 
+#ifdef PHY_SETUP
+	printk(CARDNAME ": phy_delays %d %d %d\n", phy_delay1, phy_delay2,
+			phy_delay3);
+#endif
 	/* copy the parameters from insmod into the device structure */
 	devSMC9194 = smc_init(-1);
 	if (IS_ERR(devSMC9194))
@@ -1629,3 +1881,437 @@ void cleanup_module(void)
 }
 
 #endif /* MODULE */
+
+
+#ifdef PHY_SETUP
+/*-----------------------------------------------------------
+ . PHY/MII setup routines
+ .
+*/
+
+#define phy_delay(x) ({ int d; for (d = 0; d < 100; d++) udelay((x) * 10); })
+
+/*
+ *	Ports for talking to the PHY/MII
+ */
+
+#define NV_CONTROL	0x10
+#define MIICTRL		0x30
+#define MIIDATA		0x34
+#define MIICFG		0x38
+
+#define MIIREAD		0x0001
+#define MIIWRITE	0x0002
+
+#define	MDO			0x01		/* MII Register bits */
+#define	MDI			0x02
+#define	MCLK		0x04
+#define	MDOE		0x08
+#define	MALL 		0x0F
+#define	OPWrite		0x01
+#define	OPRead		0x02
+
+
+#define PHY_CR			0		/* PHY Registers and bits */
+#define PHY_CR_Reset	0x8000
+#define PHY_CR_Speed	0x2000
+#define PHY_CR_Duplex	0x0100
+
+#define PHY_SR	1
+#define PHY_ID1	2
+#define PHY_ID2	3
+
+/*
+ *	PHY propietary registers
+ */
+
+#define PHY_NATIONAL_PAR			0x19
+#define PHY_NATIONAL_PAR_DUPLEX		0x0080
+#define PHY_NATIONAL_PAR_SPEED_10	0x0040
+
+#define PHY_TDK_DIAG				0x12
+#define PHY_TDK_DIAG_DUPLEX			0x0800
+#define PHY_TDK_DIAG_RATE			0x0400
+
+#define PHY_QSI_BASETX				0x1F
+#define PHY_QSI_BASETX_OPMODE_MASK	0x001c
+#define PHY_QSI_BASETX_OPMODE_10HD	(2<<0x1)
+#define PHY_QSI_BASETX_OPMODE_100HD	(2<<0x2)
+#define PHY_QSI_BASETX_OPMODE_10FD	(2<<0x5)
+#define PHY_QSI_BASETX_OPMODE_100FD	(2<<0x6)
+
+#define PHY_SEEQ_STATUS_OUTPUT		0x12
+#define PHY_SEEQ_SPD_DET			0x80
+#define PHY_SEEQ_DPLX_DET			0x40
+
+#define PHY_OUI_QSI			0x006051
+#define PHY_OUI_TDK			0x00C039
+#define PHY_OUI_MITELSMSC	0x00A087
+#define PHY_OUI_NATIONAL	0x080017
+#define PHY_OUI_SEEQSMSC	0x0005BE
+
+#define NWAY_TIMEOUT	10
+
+#define MAC_IS_FEAST()	(1)
+#define MAC_IS_EPIC()	(0)
+
+static void
+clkmdio(smcio_t ioaddr, unsigned int MGMTData)
+{
+	outw(MGMTData, ioaddr + MGMT);
+	udelay(phy_delay1);
+	outw(MGMTData | MCLK, ioaddr + MGMT);
+	udelay(phy_delay1);
+}
+
+
+static unsigned
+PHYAccess(
+	smcio_t ioaddr,
+	unsigned char PHYAdd,
+	unsigned char RegAdd,
+	unsigned char OPCode,
+	unsigned wData)
+{
+	int i;
+	unsigned MGMTval;
+
+	// Filter unused bits from input variables.
+
+	PHYAdd &= 0x1F;
+	RegAdd &= 0x1F;
+	OPCode &= 0x03;
+
+	if (MAC_IS_FEAST()) {
+		MGMTval = inw(ioaddr + MGMT) & (MALL ^ 0xFFFF);
+
+		// Output Preamble (32 '1's)
+
+		for (i = 0; i < 32; i++)
+			clkmdio(ioaddr, MGMTval | MDOE | MDO);
+
+		// Output Start of Frame ('01')
+
+		for (i = 0; i < 2; i++)
+			clkmdio(ioaddr, MGMTval | MDOE | i);
+
+		// Output OPCode ('01' for write or '10' for Read)
+
+		for (i = 1; i >= 0; i--)
+			clkmdio(ioaddr, MGMTval | MDOE | ((OPCode>>i) & 0x01) );
+
+		// Output PHY Address
+
+		for (i = 4; i >= 0; i--)
+			clkmdio(ioaddr, MGMTval | MDOE | ((PHYAdd>>i) & 0x01) );
+
+		// Output Register Address
+
+		for (i = 4; i >= 0; i--)
+			clkmdio(ioaddr, MGMTval | MDOE | ((RegAdd>>i) & 0x01) );
+
+		if (OPCode == OPRead) {
+			// Read Operation
+
+			// Implement Turnaround ('Z0')
+
+			clkmdio(ioaddr, MGMTval);
+			// clkmdio(ioaddr, MGMTval | MDOE);
+
+			// Read Data
+
+			wData = 0;
+
+			for (i = 15; i >= 0; i--) {
+				clkmdio(ioaddr, MGMTval);
+				wData |= (((inw(ioaddr + MGMT) & MDI) >> 1) << i);
+			}
+
+			// Add Idle state
+
+			clkmdio(ioaddr, MGMTval);
+
+			return (wData);
+		} else {
+			// Write Operation
+
+			// Implement Turnaround ('10')
+
+			for (i = 1; i >= 0; i--)
+				clkmdio(ioaddr, MGMTval | MDOE | ((2>>i) & 0x01));
+
+			// Write Data
+
+			for (i = 15; i >= 0; i--)
+				clkmdio(ioaddr, MGMTval | MDOE | ((wData>>i) & 0x01));
+
+			// Add Idle state
+
+			clkmdio(ioaddr, MGMTval);
+
+			return (1);
+		}
+	}
+
+	if (MAC_IS_EPIC()) {
+		if (OPCode == OPRead) {
+			// Read Operation
+			outw((((unsigned)PHYAdd)<<9) | (((unsigned)RegAdd)<<4) | MIIREAD,
+					ioaddr + MIICTRL);
+			phy_delay(phy_delay2);
+			wData = inw(MIIDATA);
+			return(wData);
+		} else {
+			// Write Operation
+			outw(wData, ioaddr + MIIDATA);
+			outw((((unsigned)PHYAdd)<<9) | (((unsigned)RegAdd)<<4) | MIIWRITE,
+					ioaddr + MIICTRL);
+			phy_delay(phy_delay2);
+			return(1);
+		}
+	}
+
+	return(1);
+
+}
+
+
+static unsigned char
+DetectPHY(
+	smcio_t ioaddr,
+	unsigned long *OUI,
+	unsigned char *Model,
+	unsigned char *Revision)
+{
+    unsigned int PhyId1, PhyId2;
+    unsigned char PhyAdd=0xff;
+    int Count;
+
+    for (Count=31; Count >= 0; Count--) {
+		PhyId1 = PHYAccess(ioaddr, Count, PHY_ID1, OPRead, 0);
+		PhyId1 = PHYAccess(ioaddr, Count, PHY_ID1, OPRead, 0);
+		PhyId2 = PHYAccess(ioaddr, Count, PHY_ID2, OPRead, 0);
+		PhyId2 = PHYAccess(ioaddr, Count, PHY_ID2, OPRead, 0);
+
+		if (PhyId1 > 0x0000 && PhyId1 < 0xffff && PhyId2 > 0x0000 &&
+			PhyId2 < 0xffff && PhyId1 != 0x8000 && PhyId2 != 0x8000) {
+			PhyAdd = (unsigned char) Count;
+			break;
+		}
+		phy_delay(phy_delay2);
+    }
+
+    *OUI =		(((unsigned long) PhyId1) << 6) | ((PhyId2 & 0xfc00) >> 10);
+    *Model =	(unsigned char) ((PhyId2 & 0x03f0) >> 4);
+    *Revision =	(unsigned char) (PhyId2 & 0x000f);
+
+    return(PhyAdd);
+}
+
+
+static int
+setup_phy(smcio_t ioaddr)
+{
+    int duplex = 0; /* 0 = Half,   !0 = Full */
+    int speed = 0;  /* 0 = 10Mbps, !0 = 100Mbps */
+    char *report = "";
+	unsigned long OUI;
+	unsigned char Model, Revision;
+
+    unsigned int i, PHYConfig, PHYConfig2, data;
+    unsigned char PHYAdd, ositech = 0;
+
+	printk("SMCPHY: ");
+#if 0
+	ositech = 1;
+#endif
+
+	//Setting the AUI Select Bit for 91C110 PCMCIA Design. 11/23/99 PG
+	if (ositech) {
+		SMC_SELECT_BANK( 1 );
+		data = inw(ioaddr + BANK_SELECT);
+		outw(data | 0x0100, ioaddr);
+	}
+
+    if (MAC_IS_FEAST())
+		SMC_SELECT_BANK ( 3 );
+
+	PHYAdd = DetectPHY(ioaddr, &OUI, &Model, &Revision);
+
+	if (PHYAdd > 31) {
+	    printk("UNRECOVERABLE ERROR: PHY is not present or not supported\n");
+	    return(-1);
+	}
+
+	//Setup NV_CONTROL for the cardbus card.
+	if (OUI == PHY_OUI_TDK)
+		outw(0x7c03, ioaddr + NV_CONTROL);
+
+	// Save Register 0.
+
+	if (OUI == PHY_OUI_TDK)
+		PHYAccess(ioaddr, PHYAdd, PHY_CR, OPRead, 0);
+	PHYConfig = PHYAccess(ioaddr, PHYAdd,PHY_CR,OPRead,0);
+
+	if (OUI == PHY_OUI_TDK) {
+		outw(0x0012, ioaddr + MIICFG);	/* Set ENABLE_694 */
+		/* if using EPIC, Hardware Reset the PHY from the MAC */
+		outw(inw(ioaddr + CONTROL) | 0x4000, ioaddr + CONTROL);
+		phy_delay(phy_delay2);
+		outw(inw(ioaddr + CONTROL) & (~0x4000), ioaddr + CONTROL);
+		phy_delay(phy_delay2);
+	}
+
+	/* Reset PHY */
+	PHYAccess(ioaddr, PHYAdd, PHY_CR, OPWrite, PHY_CR_Reset);
+	if (OUI == PHY_OUI_TDK)
+		PHYAccess(ioaddr, PHYAdd, PHY_CR, OPWrite, PHY_CR_Reset);
+
+	for (i = 0; i < 500; i++) {
+		if (OUI == PHY_OUI_TDK)
+			PHYAccess(ioaddr, PHYAdd, PHY_CR, OPRead, 0);
+
+		if (PHYAccess(ioaddr, PHYAdd, PHY_CR, OPRead, 0) & PHY_CR_Reset)
+			phy_delay(phy_delay2);
+		else
+			break;
+	}
+
+	if (i == 500) {
+		printk("UNRECOVERABLE ERROR: Could not reset PHY\n");
+		return(-1);
+	}
+
+	/* Write selected configuration to the PHY and verify it by reading back */
+	/* Set Advertising Register for all 10/100 and Half/Full combinations */
+
+	if (OUI == PHY_OUI_TDK)
+		PHYConfig = PHYAccess(ioaddr, PHYAdd, 4, OPRead, 0);
+	PHYConfig = PHYAccess(ioaddr, PHYAdd, 4, OPRead, 0);
+	PHYConfig |= 0x01e0;
+	PHYAccess(ioaddr, PHYAdd, 4, OPWrite, PHYConfig);
+	if (OUI == PHY_OUI_TDK)
+		PHYAccess(ioaddr, PHYAdd, 4, OPWrite, PHYConfig);
+
+	/* Start 1 */
+
+	/* National PHY requires clear before set 1 enable. */
+	PHYAccess(ioaddr, PHYAdd, 0, OPWrite, 0x0000);
+	PHYAccess(ioaddr, PHYAdd, 0, OPWrite, 0x1200);
+	if (OUI == PHY_OUI_TDK)
+		PHYAccess(ioaddr, PHYAdd, 0, OPWrite, 0x1200);
+
+	/* Wait for completion */
+	for (i = 0; i < NWAY_TIMEOUT * 10; i++) {
+		printk("%c\b", "|/-\\"[i&3]);
+
+		phy_delay(phy_delay3);
+
+		PHYConfig = PHYAccess(ioaddr, PHYAdd, 1, OPRead, 0);
+		PHYConfig2 = PHYAccess(ioaddr, PHYAdd, 1, OPRead, 0);
+
+		if (PHYConfig != PHYConfig2) /* Value is not stable */
+			continue;
+		if (PHYConfig & 0x0010) /* Remote Fault */
+			continue;
+		if ((PHYConfig == 0x0000) || (PHYConfig == 0xffff)) /* invalid value */
+			continue;
+		if (PHYConfig & 0x0020)
+			break;
+	}
+
+	/* Now read the results of the NWAY. */
+
+	if (OUI == PHY_OUI_TDK)
+		PHYConfig = PHYAccess(ioaddr, PHYAdd, 5, OPRead, 0);
+	PHYConfig = PHYAccess(ioaddr, PHYAdd, 5, OPRead, 0);
+
+	if (PHYConfig != 0) {
+		/* Got real NWAY information here */
+		report = "ANLPA";
+		speed = (PHYConfig & 0x0180);
+		duplex = (PHYConfig & 0x0140);
+	} else {
+		/*
+		 * ANLPA was 0 so NWAY did not complete or is not reported fine.
+		 * Get the info from propietary regs or from the control register.
+		 */
+		report = "Prop."; /* Proprietary Status */
+
+		switch (OUI) {
+		case PHY_OUI_NATIONAL:
+			PHYConfig = PHYAccess(ioaddr, PHYAdd, PHY_NATIONAL_PAR, OPRead, 0);
+			duplex = (PHYConfig & PHY_NATIONAL_PAR_DUPLEX);
+			speed = ! (PHYConfig & PHY_NATIONAL_PAR_SPEED_10);
+			break;
+
+		case PHY_OUI_TDK:
+			PHYConfig = PHYAccess(ioaddr, PHYAdd, PHY_TDK_DIAG, OPRead, 0);
+			PHYConfig = PHYAccess(ioaddr, PHYAdd, PHY_TDK_DIAG, OPRead, 0);
+			speed = ((Revision < 7) && ((PHYConfig & 0x300) == 0x300)) ||
+					((Revision >= 7) && (PHYConfig & PHY_TDK_DIAG_RATE));
+			duplex = ((Revision >= 7) && (PHYConfig & PHY_TDK_DIAG_DUPLEX));
+			break;
+
+		case PHY_OUI_QSI:
+			PHYConfig = PHYAccess(ioaddr, PHYAdd, PHY_QSI_BASETX, OPRead, 0);
+			PHYConfig &= PHY_QSI_BASETX_OPMODE_MASK;
+			duplex = (PHYConfig & PHY_QSI_BASETX_OPMODE_10FD) ||
+				(PHYConfig & PHY_QSI_BASETX_OPMODE_100FD);
+			speed = (PHYConfig & PHY_QSI_BASETX_OPMODE_100HD) ||
+				(PHYConfig & PHY_QSI_BASETX_OPMODE_100FD);
+			break;
+
+		case PHY_OUI_SEEQSMSC:
+			PHYConfig=PHYAccess(ioaddr,PHYAdd,PHY_SEEQ_STATUS_OUTPUT,OPRead,0);
+			duplex = (PHYConfig & PHY_SEEQ_DPLX_DET);
+			speed = (PHYConfig & PHY_SEEQ_SPD_DET);
+			break;
+
+		default:
+			report = "Command";
+			PHYConfig = PHYAccess(ioaddr, PHYAdd, 0, OPRead, 0);
+			speed = (PHYConfig & 0x2000);
+			duplex = (PHYConfig & 0x0100);
+			break;
+		}
+	}
+
+	/* Do we need to adjust the Carrier sense on full duplex FEAST issue ?  */
+
+	if (duplex && MAC_IS_FEAST() && (OUI == PHY_OUI_MITELSMSC))
+		PHYAccess(ioaddr, PHYAdd, 0x18, OPWrite,
+				0x0020 | PHYAccess(ioaddr, PHYAdd, 0x18, OPRead, 0));
+
+	/* Display what we learned */
+
+    printk(" %s-duplex %d Mbps ", duplex ? "Full" : "Half", speed ? 100 : 10);
+
+	if (MAC_IS_FEAST())
+		printk("FEAST ");
+	if (MAC_IS_EPIC())
+		printk("EPIC ");
+
+	switch (OUI) {
+	case PHY_OUI_QSI:       printk("QSI");                break;
+	case PHY_OUI_TDK:       printk("TDK");                break;
+	case PHY_OUI_MITELSMSC: printk("MITEL/SMSC180");      break;
+	case PHY_OUI_NATIONAL:  printk("NATIONAL");           break;
+	case PHY_OUI_SEEQSMSC:  printk("SEEQ/SMSC183");       break;
+	default:                printk("%06lX(UNKNOWN)",OUI); break;
+	}
+
+	printk(" Model=%02X Rev=%02X ", Model, Revision);
+#if DEBUG
+	printk("Addr=%02X ", PHYAdd);
+	printk("Conf=%s ", report);
+#endif
+	if (i == NWAY_TIMEOUT)
+		printk("TIMEOUT!\n");
+	else
+		printk("Done.\n");
+	return(0);
+}
+
+/*----------------------------------------------------------- */
+#endif /* PHY_SETUP */

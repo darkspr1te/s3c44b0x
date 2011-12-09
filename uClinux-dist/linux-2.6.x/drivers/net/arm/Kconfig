@@ -44,3 +44,10 @@ config ARM_ETHER00
 	  will generate a suitable hw address based on the board serial
 	  number (MTD support is required for this). Otherwise you will
 	  need to set a suitable hw address using ifconfig.
+
+config ETH_S3C4510B
+	bool "Samsung S3C4510B Ethernet Support"
+	depends on NET_ETHERNET && ARM && CPU_S3C4510B
+	help
+	  This is the driver for Samsung's S3C4510B SoC MAC IP core. Say
+	  Y here if you want to build support for this into the kernel.

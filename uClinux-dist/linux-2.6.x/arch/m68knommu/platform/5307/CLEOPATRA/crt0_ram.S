@@ -99,33 +99,25 @@ _start:
 	move.l	%d0, %sp			/* Set up initial stack ptr */
 	move.l	%d0, _ramend			/* Set end ram addr */
 
-
-	/* now fire off the cache, remember to invalidate it first */
-	movl  #0,%d0
-	movc  %d0,%CACR
+	/*
+	 *	Enable CPU internal cache.
+	 */
+	move.l	#0x01000000, %d0		/* invalidate whole cache */
+	movec	%d0,%CACR
 	nop
-	movc  %d0,%CACR				/* cache is off */
+#ifdef DEBUGGER_COMPATIBLE_CACHE
+	move.l	#0x0000c000, %d0		/* Set SDRAM cached only */
+#else
+	move.l	#0x0000c020, %d0		/* Set SDRAM cached only (copyback) */
+#endif
+	movec	%d0, %ACR0
+	move.l	#0x00000000, %d0		/* No other regions cached */
+	movec	%d0, %ACR1
 
-	movl  #CACR_CINVA,%d0			/* invalidate whole cache */
-	movc  %d0,%CACR
+	/* Enable cache */
+	move.l	#0xa0000200, %d0
+	movec	%d0,%CACR
 	nop
-	movc  %d0,%CACR
-	nop                                    
-
-	/* make region ROM cachable (turn off for flash programming?) */
-	/* 0xff000000 - 0xffffffff */
-	movl #(0xff<<ACR_BASE_POS)+(0<<ACR_MASK_POS)+ACR_ENABLE+ACR_ANY+ACR_CM_WBACK+ACR_WPROTECT,%d0
-	movc  %d0,%ACR0
-
-	/* make region RAM cachable *
-	/* 0x00000000 - 0x00ffffffff */
-	movl #(0x00<<ACR_BASE_POS)+(0<<ACR_MASK_POS)+ACR_ENABLE+ACR_ANY+ACR_CM_WBACK,%d0
-	movc  %d0,%ACR1
-
-	/* make the default cache mode precise */
-	movl  #CACR_EC+CACR_ESB+CACR_DCM_OFF_PRE,%d0 /* enable cache */
-	movc  %d0,%CACR
-
 
 #ifdef CONFIG_ROMFS_FS
 	/*

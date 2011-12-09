@@ -8,3 +8,4 @@ obj-$(CONFIG_ARM_ETHER00)	+= ether00.o
 obj-$(CONFIG_ARM_ETHERH)	+= etherh.o
 obj-$(CONFIG_ARM_ETHER3)	+= ether3.o
 obj-$(CONFIG_ARM_ETHER1)	+= ether1.o
+obj-$(CONFIG_ETH_S3C4510B)	+= eth_s3c4510b.o

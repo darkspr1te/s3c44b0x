@@ -34,6 +34,7 @@
 #include <linux/keyboard.h>
 #include <linux/init.h>
 #include <linux/pm.h>
+#include <linux/delay.h>
 
 #include <asm/io.h>
 #include <asm/irq.h>
@@ -1005,7 +1006,7 @@ static void send_break(	struct m68k_serial * info, int duration)
         unsigned long flags;
         if (!info->port)
                 return;
-        current->state = TASK_INTERRUPTIBLE;
+        set_current_state(TASK_INTERRUPTIBLE);
         save_flags(flags);
         cli();
 #ifdef USE_INTS	
@@ -1197,8 +1198,7 @@ static void rs_close(struct tty_struct *tty, struct file * filp)
 #endif	
 	if (info->blocked_open) {
 		if (info->close_delay) {
-			current->state = TASK_INTERRUPTIBLE;
-			schedule_timeout(info->close_delay);
+			msleep_interruptible(jiffies_to_msecs(info->close_delay));
 		}
 		wake_up_interruptible(&info->open_wait);
 	}

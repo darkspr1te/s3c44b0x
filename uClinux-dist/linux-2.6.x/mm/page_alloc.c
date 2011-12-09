@@ -219,7 +219,9 @@ static inline void free_pages_check(const char *function, struct page *page)
 {
 	if (	page_mapped(page) ||
 		page->mapping != NULL ||
+#ifdef CONFIG_MMU
 		page_count(page) != 0 ||
+#endif
 		(page->flags & (
 			1 << PG_lru	|
 			1 << PG_private |

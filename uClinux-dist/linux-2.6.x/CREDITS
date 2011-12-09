@@ -603,6 +603,17 @@ S: Stanford University
 S: Stanford, California 94305
 S: USA
 
+N: Hyok S. Choi
+W: http://opensrc.sec.samsung.com/
+E: hyok.choi@samsung.com
+E: hschoe@adam.kaist.ac.kr
+D: Author and Maintainer of uClinux/ARM port (armnommu)
+D: Author of Trace32 JTAG1 serial console emulation driver
+S: SW Platform Lab, DM R&D center
+S: Samsung Electronics Co.,Ltd.
+S: Suwon, Gyeonggi, 443-742
+S: Korea
+
 N: Randolph Chung
 E: tausq@debian.org
 D: Linux/PA-RISC hacker

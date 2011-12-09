@@ -1,0 +1,4 @@
+#ifndef _ASMARMNOMMU_SUSPEND_H
+#define _ASMARMNOMMU_SUSPEND_H
+
+#endif

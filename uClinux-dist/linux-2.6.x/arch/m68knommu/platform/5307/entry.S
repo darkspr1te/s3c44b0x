@@ -145,8 +145,8 @@ Lreturn:
 	addl    %sp@+,%sp		/* stk adj */
 	addql   #8,%sp			/* remove exception */
 	movel   %sp,sw_ksp		/* save ksp */
+	subql   #8,sw_usp		/* set exception */
 	movel   sw_usp,%sp		/* restore usp */
-	subql   #8,%sp			/* set exception */
 	rte
 
 Lwork_to_do:
@@ -160,8 +160,7 @@ Lsignal_return:
 	subql	#4,%sp			/* dummy return address */
 	SAVE_SWITCH_STACK
 	pea	%sp@(SWITCH_STACK_SIZE)
-	clr	%d1
-	movel	%d1,%sp@-
+	clrl	%sp@-
 	jsr	do_signal
 	addql	#8,%sp
 	RESTORE_SWITCH_STACK

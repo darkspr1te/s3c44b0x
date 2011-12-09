@@ -2436,6 +2436,12 @@ W:	http://www.uclinux.org/
 L:	uclinux-dev@uclinux.org
 S:	Maintained
 
+UCLINUX FOR ARM
+P:	Hyok S. Choi
+M:	hyok.choi@samsung.com
+W:	http://opensrc.sec.samsung.com/
+S:	Maintained
+
 UCLINUX FOR NEC V850
 P:	Miles Bader
 M:	uclinux-v850@lsi.nec.co.jp
