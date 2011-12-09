@@ -165,14 +165,14 @@ asmlinkage int sys_ipc(uint call, int first, int second, int third,
 		union semun fourth;
 		if (!ptr)
 			return -EINVAL;
-		if (get_user(fourth.__pad, (void __user **) ptr))
+		if (get_user(fourth.__pad, (void __user * __user *) ptr))
 			return -EFAULT;
 		return sys_semctl (first, second, third, fourth);
 	}
 
 	case MSGSND:
 		return sys_msgsnd(first, (struct msgbuf __user *) ptr, 
-				   second, third);
+				  second, third);
 	case MSGRCV:
 		switch (version) {
 		case 0: {
@@ -204,11 +204,8 @@ asmlinkage int sys_ipc(uint call, int first, int second, int third,
 				return ret;
 			return put_user(raddr, (ulong __user *)third);
 		}
-		case 1:	/* iBCS2 emulator entry point */
-			if (!segment_eq(get_fs(), get_ds()))
-				return -EINVAL;
-			return do_shmat(first, (char __user *) ptr,
-					second, (ulong __user *) third);
+		case 1: /* Of course, we don't support iBCS2! */
+			return -EINVAL;
 		}
 	case SHMDT: 
 		return sys_shmdt ((char __user *)ptr);
@@ -244,7 +241,7 @@ asmlinkage int sys_clone(unsigned long clone_flags, unsigned long newsp, struct 
 	if (!newsp)
 		newsp = regs->ARM_sp;
 
-	return do_fork(clone_flags & ~CLONE_IDLETASK, newsp, regs, 0, NULL, NULL);
+	return do_fork(clone_flags, newsp, regs, 0, NULL, NULL);
 }
 
 asmlinkage int sys_vfork(struct pt_regs *regs)
@@ -306,7 +303,7 @@ long execve(const char *filename, char **argv, char **envp)
 		  "Ir" (sizeof(regs))
 		: "r0", "r1", "r2", "r3", "ip", "memory");
 
-out:
+ out:
 	return ret;
 }
 EXPORT_SYMBOL(execve);

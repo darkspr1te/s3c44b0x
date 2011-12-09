@@ -23,7 +23,8 @@ config CPU_ARM610
 
 # ARM710
 config CPU_ARM710
-	bool "Support ARM710 processor" if !ARCH_S3C3410 && !ARCH_ATMEL && !ARCH_ESPD_4510B  && !ARCH_S3C44B0
+	bool "Support ARM710 processor"
+        depends on ARCH_S3C3410 || ARCH_ATMEL || ARCH_S3C44B0
 	default y if ARCH_S3C3410 || ARCH_ATMEL || ARCH_S3C44B0
 	select CPU_32v3
 	select CPU_CACHE_V3
@@ -38,7 +39,8 @@ config CPU_ARM710
 
 # S3C4510B
 config CPU_S3C4510B
-	bool "Support S3C4510B/ARM7TDMI processor" if !ARCH_ESPD_4510B
+	bool "Support S3C4510B/ARM7TDMI processor"
+        depends on ARCH_ESPD_4510B
 	default y if ARCH_ESPD_4510B
 	select CPU_32v4
 
@@ -125,7 +127,8 @@ config CPU_ARM925T
 # ARM926T
 config CPU_ARM926T
 	bool "Support ARM926T processor"
-	depends on ARCH_INTEGRATOR || ARCH_OMAP1610
+	depends on ARCH_INTEGRATOR || ARCH_OMAP1610 || ARCH_S3C24A0 
+	default y if ARCH_S3C24A0
 	select CPU_32v5
 	select CPU_ABRT_EV5TJ
 	help

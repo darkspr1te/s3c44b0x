@@ -4,7 +4,7 @@
  */
 
 #include <asm-generic/vmlinux.lds.h>
-	
+
 OUTPUT_ARCH(arm)
 ENTRY(stext)
 #ifndef __ARMEB__

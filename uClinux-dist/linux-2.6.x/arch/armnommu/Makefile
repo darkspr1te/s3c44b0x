@@ -8,9 +8,8 @@
 # Copyright (C) 2004 by Hyok S. Choi (for uClinux/ARM 2.6)
 # Copyright (C) 1995-2001 by Russell King
 
-LDFLAGS_vmlinux	:=-p -X
-LDFLAGS_BLOB	:=--format binary
-AFLAGS_vmlinux.lds.o = -DTEXTADDR=$(TEXTADDR) -DDATAADDR=$(DATAADDR)
+LDFLAGS_vmlinux	:=-p --no-undefined -X
+CPPFLAGS_vmlinux.lds = -DTEXTADDR=$(TEXTADDR) -DDATAADDR=$(DATAADDR)
 OBJCOPYFLAGS	:=-O binary -R .note -R .comment -S
 GZFLAGS		:=-9
 CFLAGS		+=-fno-builtin -D__linux__
@@ -39,8 +38,8 @@ comma = ,
 # Note that GCC does not numerically define an architecture version
 # macro, but instead defines a whole series of macros which makes
 # testing for a specific architecture or later rather impossible.
-arch-$(CONFIG_CPU_32v6)		:=-D__LINUX_ARM_ARCH__=6 -march=armv5t -Wa,-march=armv6
-arch-$(CONFIG_CPU_32v5)		:=-D__LINUX_ARM_ARCH__=5 $(call check_gcc,-march=armv5te,-march=armv4)
+arch-$(CONFIG_CPU_32v6)		:=-D__LINUX_ARM_ARCH__=6 $(call cc-option,-march=armv6,-march=armv5t -Wa$(comma)-march=armv6)
+arch-$(CONFIG_CPU_32v5)		:=-D__LINUX_ARM_ARCH__=5 $(call cc-option,-march=armv5te,-march=armv4)
 arch-$(CONFIG_CPU_32v4)		:=-D__LINUX_ARM_ARCH__=4 -march=armv4
 arch-$(CONFIG_CPU_32v3)		:=-D__LINUX_ARM_ARCH__=3 -march=armv3
 
@@ -53,20 +52,18 @@ tune-$(CONFIG_CPU_ARM720T)	:=-mtune=arm7tdmi
 tune-$(CONFIG_CPU_ARM740T)	:=-mtune=arm7tdmi
 tune-$(CONFIG_CPU_ARM920T)	:=-mtune=arm9tdmi
 tune-$(CONFIG_CPU_ARM922T)	:=-mtune=arm9tdmi
+tune-$(CONFIG_CPU_ARM925T)	:=-mtune=arm9tdmi
 tune-$(CONFIG_CPU_ARM926T)	:=-mtune=arm9tdmi
 tune-$(CONFIG_CPU_ARM940T)	:=-mtune=arm9tdmi
 
 # Need -Uarm for gcc < 3.x
-CFLAGS_BOOT	:=-mapcs-32 $(arch-y) $(tune-y) -mshort-load-bytes -msoft-float -Wa,-mno-fpu -Uarm
-CFLAGS		+=-mapcs-32 $(arch-y) $(tune-y) -mshort-load-bytes -msoft-float -Wa,-mno-fpu -Uarm
-AFLAGS		+=-mapcs-32 $(arch-y) $(tune-y) -msoft-float -Wa,-mno-fpu
+CFLAGS		+=-mapcs-32 $(arch-y) $(tune-y) $(call cc-option,-malignment-traps,-mshort-load-bytes) -msoft-float -Uarm
+AFLAGS		+=-mapcs-32 $(arch-y) $(tune-y) -msoft-float
 
-# settings for endian
-ifeq ($(CONFIG_CPU_BIG_ENDIAN),y)
-  LDFLAGS_BLOB  += --oformat elf32-bigarm
-else
-  LDFLAGS_BLOB  += --oformat elf32-littlearm
-endif
+CHECKFLAGS	+= -D__arm__
+
+#Default value
+DATAADDR	:= .
 
 # These are the default values for independt
 DATAADDR	:= .
@@ -86,6 +83,8 @@ machine-$(CONFIG_ARCH_S3C44B0)		:= s3c44b0x
 	textaddr-$(CONFIG_ARCH_S3C44B0)		:= 0x0c008000
 machine-$(CONFIG_ARCH_S5C7375) 		:= s5c7375
 	textaddr-$(CONFIG_ARCH_S5C7375) 	:= 0x00008000
+machine-$(CONFIG_ARCH_S3C24A0)		:= s3c24a0
+	textaddr-$(CONFIG_ARCH_S3C24A0) 	:= 0x10008000
 
 # set the environment variables and export
 MACHINE  := $(machine-y)
@@ -93,7 +92,7 @@ TEXTADDR := $(textaddr-y)
 ifeq ($(incdir-y),)
 incdir-y := $(MACHINE)
 endif
-INCDIR   := $(incdir-y)
+INCDIR   := arch-$(incdir-y)
   
 export	MACHINE PROCESSOR TEXTADDR GZFLAGS CFLAGS_BOOT
 
@@ -123,6 +122,9 @@ core-y				+= arch/armnommu/mach-$(MACHINE)/
 endif
 core-$(CONFIG_FPE_NWFPE)	+= arch/arm/nwfpe/
 core-$(CONFIG_FPE_FASTFPE)	+= $(FASTFPE_OBJ)
+core-$(CONFIG_VFP)		+= arch/arm/vfp/
+
+drivers-$(CONFIG_OPROFILE)      += arch/arm/oprofile/
 
 libs-y				+= arch/arm/lib/
 
@@ -132,25 +134,27 @@ all: uCImage
 boot := arch/armnommu/boot
 
 #	Update machine arch and proc symlinks if something which affects
-#	them changed.  We use .arch and .proc to indicate when they were
-#	updated last, otherwise make uses the target directory mtime.
+#	them changed.  We use .arch to indicate when they were updated
+#	last, otherwise make uses the target directory mtime.
 
-include/asm-armnommu/.arch: $(wildcard include/config/arch/*.h)
-	@echo '  Making asm-armnommu/arch -> asm-armnommu/arch-$(INCDIR) symlink'
-	@rm -f include/asm-armnommu/arch
-	@ln -sf arch-$(INCDIR) include/asm-armnommu/arch
+include/asm-armnommu/.arch: $(wildcard include/config/arch/*.h) include/config/MARKER
+	@echo '  SYMLINK include/asm-armnommu/arch -> include/asm-armnommu/$(INCDIR)'
+ifneq ($(KBUILD_SRC),)
+	$(Q)mkdir -p include/asm-armnommu
+	$(Q)ln -fsn $(srctree)/include/asm-armnommu/$(INCDIR) include/asm-armnommu/arch
+else
+	$(Q)ln -fsn $(INCDIR) include/asm-armnommu/arch
+endif
 	@touch $@
 
-prepare: maketools
+prepare: maketools include/asm-armnommu/.arch
 
 .PHONY: maketools FORCE
-maketools: include/asm-armnommu/.arch \
-	   include/asm-armnommu/constants.h include/linux/version.h FORCE
+maketools: include/asm-armnommu/constants.h include/linux/version.h FORCE
 	$(Q)$(MAKE) $(build)=arch/arm/tools include/asm-arm/mach-types.h
 
 # Convert bzImage to zImage
-bzImage: vmlinux
-	$(Q)$(MAKE) $(build)=$(boot) $(boot)/zImage
+bzImage: zImage
 
 zImage Image bootpImage uImage: vmlinux
 	$(Q)$(MAKE) $(build)=$(boot) $(boot)/$@
@@ -164,24 +168,20 @@ linux.bin: vmlinux FORCE
 zinstall install: vmlinux
 	$(Q)$(MAKE) $(build)=$(boot) $@
 
-CLEAN_FILES += include/asm-armnommu/constants.h* include/asm-arm/mach-types.h
-CLEAN_FILES += linux.bin linux arch/armnommu/kernel/entry-macro.S
-CLEAN_FILES += include/asm-armnommu/arch include/asm-armnommu/.arch
+CLEAN_FILES += include/asm-armnommu/constants.h* include/asm-arm/mach-types.h \
+			include/asm-armnommu/arch include/asm-armnommu/.arch \
+			linux.bin linux arch/armnommu/kernel/entry-macro.S
 
 # We use MRPROPER_FILES and CLEAN_FILES now
 archclean:
 	$(Q)$(MAKE) $(clean)=$(boot)
 
-# My testing targets (that short circuit a few dependencies)
-zImg:;	$(Q)$(MAKE) $(build)=$(boot) $(boot)/zImage
-Img:;	$(Q)$(MAKE) $(build)=$(boot) $(boot)/Image
+# My testing targets (bypasses dependencies)
 bp:;	$(Q)$(MAKE) $(build)=$(boot) $(boot)/bootpImage
-i:;	$(Q)$(MAKE) $(build)=$(boot) install
-zi:;	$(Q)$(MAKE) $(build)=$(boot) zinstall
+i zi:;	$(Q)$(MAKE) $(build)=$(boot) $@
 
 arch/$(ARCH)/kernel/asm-offsets.s: include/asm include/linux/version.h \
-				   include/asm-armnommu/.arch \
-				   include/config/MARKER
+				   include/asm-armnommu/.arch
 
 include/asm-$(ARCH)/constants.h: arch/$(ARCH)/kernel/asm-offsets.s
 	$(call filechk,gen-asm-offsets)

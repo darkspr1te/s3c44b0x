@@ -41,9 +41,13 @@
 #include <asm/mach/irq.h>
 #include <asm/mach/map.h>
 
+extern void atmel_time_init(void);
+
 extern void __init atmel_init_irq(void);
+
 
 MACHINE_START(ATMEL, "ATMEL EB01")
 	MAINTAINER("Hyok S. Choi <hyok.choi@samsung.com>")
 	INITIRQ(atmel_init_irq)
+	INITTIME(atmel_time_init)
 MACHINE_END

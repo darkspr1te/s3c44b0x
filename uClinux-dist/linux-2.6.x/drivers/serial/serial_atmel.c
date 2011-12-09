@@ -370,7 +370,7 @@ static _INLINE_ void receive_chars(struct atmel_serial *info, unsigned long stat
 	if (tty->flip.count >= TTY_FLIPBUF_SIZE)
 		schedule_work(&tty->flip.work);
 
-	if ((count tty->flip.count) >= TTY_FLIPBUF_SIZE) {
+	if ((count + tty->flip.count) >= TTY_FLIPBUF_SIZE) {
 #ifdef US_RTS
 		atmel_cts_off(info);
 #endif
@@ -412,17 +412,17 @@ static _INLINE_ void transmit_chars(struct atmel_serial *info)
 		goto clear_and_return;
 	}
 
-	if (info->xmit_tail info->xmit_cnt < SERIAL_XMIT_SIZE) {
-		xmit_string(info, info->xmit_buf info->xmit_tail,
+	if (info->xmit_tail + info->xmit_cnt < SERIAL_XMIT_SIZE) {
+		xmit_string(info, info->xmit_buf + info->xmit_tail,
 					info->xmit_cnt);
 		info->xmit_tail =
-			(info->xmit_tail info->xmit_cnt) & (SERIAL_XMIT_SIZE - 1);
+			(info->xmit_tail + info->xmit_cnt) & (SERIAL_XMIT_SIZE - 1);
 		info->xmit_cnt = 0;
 	} else {
 		coucou1();
-		xmit_string(info, info->xmit_buf info->xmit_tail,
+		xmit_string(info, info->xmit_buf + info->xmit_tail,
 					SERIAL_XMIT_SIZE - info->xmit_tail);
-		//xmit_string(info, info->xmit_buf, info->xmit_tail info->xmit_cnt - SERIAL_XMIT_SIZE);
+		//xmit_string(info, info->xmit_buf, info->xmit_tail + info->xmit_cnt - SERIAL_XMIT_SIZE);
 		info->xmit_cnt =
 			info->xmit_cnt - (SERIAL_XMIT_SIZE - info->xmit_tail);
 		info->xmit_tail = 0;
@@ -958,12 +958,12 @@ static int rs_write(struct tty_struct *tty, int from_user,
 		if (from_user) {
 			down(&tmp_buf_sem);
 			copy_from_user(tmp_buf, buf, c);
-			memcpy(info->xmit_buf info->xmit_head, tmp_buf, c);
+			memcpy(info->xmit_buf + info->xmit_head, tmp_buf, c);
 			up(&tmp_buf_sem);
 		} else {
-			memcpy(info->xmit_buf info->xmit_head, buf, c);
+			memcpy(info->xmit_buf + info->xmit_head, buf, c);
 		}
-		info->xmit_head = (info->xmit_head c) & (SERIAL_XMIT_SIZE - 1);
+		info->xmit_head = (info->xmit_head + c) & (SERIAL_XMIT_SIZE - 1);
 		info->xmit_cnt += c;
 		restore_flags(flags);
 		buf += c;
@@ -990,8 +990,8 @@ static int rs_write(struct tty_struct *tty, int from_user,
 			if (info->xmit_cnt) {
 				/* Send char */
 				wait_EOT(info->usart);
-				if (info->xmit_tail info->xmit_cnt < SERIAL_XMIT_SIZE) {
-					xmit_string(info, info->xmit_buf info->xmit_tail,
+				if (info->xmit_tail + info->xmit_cnt < SERIAL_XMIT_SIZE) {
+					xmit_string(info, info->xmit_buf + info->xmit_tail,
 								info->xmit_cnt);
 					info->xmit_tail =
 						(info->xmit_tail +
@@ -999,9 +999,9 @@ static int rs_write(struct tty_struct *tty, int from_user,
 					info->xmit_cnt = 0;
 				} else {
 					coucou2();
-					xmit_string(info, info->xmit_buf info->xmit_tail,
+					xmit_string(info, info->xmit_buf + info->xmit_tail,
 								SERIAL_XMIT_SIZE - info->xmit_tail);
-					//xmit_string(info, info->xmit_buf, info->xmit_tail info->xmit_cnt - SERIAL_XMIT_SIZE);
+					//xmit_string(info, info->xmit_buf, info->xmit_tail + info->xmit_cnt - SERIAL_XMIT_SIZE);
 					info->xmit_cnt =
 						info->xmit_cnt - (SERIAL_XMIT_SIZE - info->xmit_tail);
 					info->xmit_tail = 0;
@@ -1415,6 +1415,8 @@ static void rs_close(struct tty_struct *tty, struct file *filp)
 	tty->closing = 0;
 	info->event = 0;
 	info->tty = 0;
+#warning "This is not and has never been valid so fix it"	
+#if 0
 	if (tty->ldisc.num != ldiscs[N_TTY].num) {
 		if (tty->ldisc.close)
 			(tty->ldisc.close) (tty);
@@ -1423,6 +1425,7 @@ static void rs_close(struct tty_struct *tty, struct file *filp)
 		if (tty->ldisc.open)
 			(tty->ldisc.open) (tty);
 	}
+#endif
 	if (info->blocked_open) {
 		if (info->close_delay) {
 			current->state = TASK_INTERRUPTIBLE;
@@ -1767,10 +1770,10 @@ static void dbg_putc(int ch)
 
 	tmp[0] = ch;
 
-	outl_t((unsigned long) tmp, (USART0_BASE US_TPR) );
-	outl_t(1, (USART0_BASE US_TCR) );
+	outl_t((unsigned long) tmp, (USART0_BASE + US_TPR) );
+	outl_t(1, (USART0_BASE + US_TCR) );
 
-	while (inl_t((USART0_BASE US_TCR) )) {
+	while (inl_t((USART0_BASE + US_TCR) )) {
 	}
 }
 
@@ -1808,12 +1811,12 @@ static void dump_a(unsigned long a, unsigned int s)
 
 	for (q = 0; q < s; q++) {
 		if (q % 16 == 0) {
-			dbg_printk("%08X: ", q a);
+			dbg_printk("%08X: ", q + a);
 		}
 		if (q % 16 == 7) {
-			dbg_printk("%02X-", *(unsigned char *) (q a));
+			dbg_printk("%02X-", *(unsigned char *) (q + a));
 		} else {
-			dbg_printk("%02X ", *(unsigned char *) (q a));
+			dbg_printk("%02X ", *(unsigned char *) (q + a));
 		}
 		if (q % 16 == 15) {
 			dbg_printk(" :\n");
@@ -1864,7 +1867,7 @@ void atmel_console_write (struct console *co, const char *str,
     	while (count--) {
         	if (*str == '\n')
            		rs_put_char(info,'\r');
-        	rs_put_char(info, *str+);
+        	rs_put_char(info, *str++ );
     	}
 }
 

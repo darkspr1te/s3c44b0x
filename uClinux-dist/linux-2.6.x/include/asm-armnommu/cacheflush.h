@@ -50,7 +50,7 @@
 #endif
 
 #if defined(CONFIG_CPU_ARM920T) || defined(CONFIG_CPU_ARM922T) || \
-    defined(CONFIG_CPU_ARM1020)
+    defined(CONFIG_CPU_ARM925T) || defined(CONFIG_CPU_ARM1020)
 # define MULTI_CACHE 1
 #endif
 
@@ -82,7 +82,7 @@
  *	Start addresses are inclusive and end addresses are exclusive;
  *	start addresses should be rounded down, end addresses up.
  *
- *	See linux/Documentation/cachetlb.txt for more information.
+ *	See Documentation/cachetlb.txt for more information.
  *	Please note that the implementation of these, and the required
  *	effects are cache-type (VIVT/VIPT/PIPT) specific.
  *
@@ -142,6 +142,7 @@ struct cpu_cache_fns {
 	void (*flush_user_range)(unsigned long, unsigned long, unsigned int);
 
 	void (*coherent_kern_range)(unsigned long, unsigned long);
+	void (*coherent_user_range)(unsigned long, unsigned long);
 	void (*flush_kern_dcache_page)(void *);
 
 	void (*dma_inv_range)(unsigned long, unsigned long);
@@ -207,20 +208,26 @@ extern void dmac_flush_range(unsigned long, unsigned long);
  */
 #define flush_cache_all()	__cpuc_flush_kern_all()
 
-#define flush_cache_mm(mm) __cpuc_flush_user_all()
-#define flush_cache_range(vma, start, end)	\
-	__cpuc_flush_user_range((start) & PAGE_MASK, \
+#define flush_cache_mm(mm) __cpuc_flush_kern_all()
+#define flush_cache_range(vma, start, end)	flush_cache_all()
+#if 0
+	__cpuc_flush_kern_range((start) & PAGE_MASK, \
 	PAGE_ALIGN(end), (vma)->vm_flags)
+#endif
 
 #define flush_dcache_range(start,len)		flush_cache_all()
 #define flush_dcache_page(page)			flush_cache_all()
+#define flush_icache_user_range(vma,page,addr,len) 	flush_cache_all()
+
 /*
  * Perform necessary cache operations to ensure that data previously
  * stored within this range of addresses can be executed by the CPU.
  */
 #define flush_icache_range(s,e)		__cpuc_coherent_kern_range(s,e)
 #define flush_icache_page(vma,pg)		do { } while (0)
-#define flush_icache_user_range(vma,pg,adr,len)	flush_cache_all()
+#define flush_cache_page(vma,pg)		do { } while (0)
+#define flush_cache_user_range(vma,s,e)  flush_cache_range(vma,s,e)
+
 
 #define flush_cache_vmap(start, end)		flush_cache_all()
 #define flush_cache_vunmap(start, end)		flush_cache_all()
@@ -229,12 +236,5 @@ extern void dmac_flush_range(unsigned long, unsigned long);
 	memcpy(dst, src, len)
 #define copy_from_user_page(vma, page, vaddr, dst, src, len) \
 	memcpy(dst, src, len)
-
-static inline void
-flush_cache_page(struct vm_area_struct *vma, unsigned long user_addr)
-{
-	unsigned long addr = user_addr & PAGE_MASK;
-	__cpuc_flush_user_range(addr, addr + PAGE_SIZE, vma->vm_flags);
-}
 
 #endif

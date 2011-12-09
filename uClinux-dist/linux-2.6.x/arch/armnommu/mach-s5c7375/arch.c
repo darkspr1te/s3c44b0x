@@ -42,9 +42,12 @@
 #include <asm/mach/map.h>
 
 
+extern void s5c7375_time_init(void);
+
 extern void __init s5c7375_init_irq(void);
 
 MACHINE_START(S5C7375, "S5C7375, SAMSUNG ELECTRONICS Co., Ltd.")
 	MAINTAINER("Hyok S. Choi <hyok.choi@samsung.com>")
 	INITIRQ(s5c7375_init_irq)
+	INITTIME(s5c7375_time_init)
 MACHINE_END

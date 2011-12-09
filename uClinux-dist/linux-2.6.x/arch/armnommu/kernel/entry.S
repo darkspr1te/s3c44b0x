@@ -226,7 +226,6 @@ __dabt_usr:	sub	sp, sp, #S_FRAME_SIZE		@ Allocate frame size in one go
 		ldmia	r7, {r2 - r4}			@ Get USR pc, cpsr
 		stmia	r5, {r2 - r4}			@ Save USR pc, cpsr, old_r0
 		stmdb	r5, {sp, lr}^
-		alignment_trap r7, r7, __temp_abt
 		zero_fp
 #ifdef MULTI_ABORT
 		ldr	r4, .LCprocfns			@ pass r2, r3 to
@@ -248,7 +247,6 @@ __irq_usr:	sub	sp, sp, #S_FRAME_SIZE
 		ldmia	r4, {r5 - r7}			@ get saved PC, SPSR
 		stmia	r8, {r5 - r7}			@ save pc, psr, old_r0
 		stmdb	r8, {sp, lr}^
-		alignment_trap r4, r7, __temp_irq
 		zero_fp
 #ifdef CONFIG_PREEMPT
 		get_thread_info r8
@@ -285,7 +283,6 @@ __und_usr:	sub	sp, sp, #S_FRAME_SIZE		@ Allocate frame size in one go
 		ldmia	r4, {r5 - r7}
 		stmia	r8, {r5 - r7}			@ Save USR pc, cpsr, old_r0
 		stmdb	r8, {sp, lr}^			@ Save user sp, lr
-		alignment_trap r4, r7, __temp_und
 		zero_fp
 		tst	r6, #PSR_T_BIT			@ Thumb mode?
 		bne	fpundefinstr			@ ignore FP
@@ -382,7 +379,6 @@ __pabt_usr:	sub	sp, sp, #S_FRAME_SIZE		@ Allocate frame size in one go
 		ldmia	r4, {r5 - r7}			@ Get USR pc, cpsr
 		stmia	r8, {r5 - r7}			@ Save USR pc, cpsr, old_r0
 		stmdb	r8, {sp, lr}^			@ Save sp_usr lr_usr
-		alignment_trap r4, r7, __temp_abt
 		zero_fp
 		enable_irq r0				@ Enable interrupts
 		mov	r0, r5				@ address (pc)
@@ -399,7 +395,7 @@ ENTRY(ret_from_exception)
 
 /*
  * Register switch for ARMv3 and ARMv4 processors
- * r0 = previous thread_info, r1 = next thread_info
+ * r0 = previous task_struct, r1 = previous thread_info, r2 = next thread_info
  * previous and next are guaranteed not to be the same.
  */
 ENTRY(__switch_to)

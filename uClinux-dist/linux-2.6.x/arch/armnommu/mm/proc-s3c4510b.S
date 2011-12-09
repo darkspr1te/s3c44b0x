@@ -98,6 +98,19 @@ reg_save:
 ENTRY(s3c4510b_coherent_kern_range)
 	/* FALLTHROUGH */
 
+                                                                                                                                           
+/*
+ *      coherent_user_range(start, end)
+ *
+ *      Ensure coherency between the Icache and the Dcache in the
+ *      region described by start, end.  If you have non-snooping
+ *      Harvard caches, you need to implement this function.
+ *
+ *      - start - virtual start address
+ *      - end   - virtual end address
+ */
+ENTRY(s3c4510b_coherent_user_range)
+
 /*
  *	flush_kern_dcache_page(void *page)
  *
@@ -351,6 +364,7 @@ ENTRY(s3c4510b_cache_fns)
 		.long	s3c4510b_flush_user_cache_all
 		.long	s3c4510b_flush_user_cache_range
 		.long	s3c4510b_coherent_kern_range
+	        .long   s3c4510b_coherent_user_range
 		.long	s3c4510b_flush_kern_dcache_page
 		.long	s3c4510b_dma_inv_range
 		.long	s3c4510b_dma_clean_range

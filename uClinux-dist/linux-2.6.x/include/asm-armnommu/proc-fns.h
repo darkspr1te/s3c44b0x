@@ -133,11 +133,18 @@
 # endif
 #endif
 
+#ifndef __ASSEMBLY__
+
 #ifndef MULTI_CPU
 #include "asm/cpu-single.h"
 #else
 #include "asm/cpu-multi32.h"
 #endif
 
+#include <asm/memory.h>
+
+#define cpu_switch_mm(pgd,mm) cpu_do_switch_mm(virt_to_phys(pgd),mm)
+
+#endif /* __ASSEMBLY__ */
 #endif /* __KERNEL__ */
 #endif /* __ASM_PROCFNS_H */

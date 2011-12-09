@@ -190,7 +190,6 @@ ENTRY(cpu_arm7_proc_fin)
 
 ENTRY(cpu_arm6_do_idle)
 ENTRY(cpu_arm7_do_idle)
-		mov	r0, #-EINVAL
 		mov	pc, lr
 
 /*

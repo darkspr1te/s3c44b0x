@@ -4,4 +4,4 @@
 
 # Object file lists.
 
-obj-y		+= arch.o irq.o
+obj-y		+= arch.o irq.o time.o

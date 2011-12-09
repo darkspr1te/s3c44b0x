@@ -39,7 +39,8 @@
 
 
 extern void __init s3c3410_init_irq(void);
-
+extern void s3c3410_time_init(void);
+                                                                                                                                           
 static void __init
 fixup_s3c3410(struct machine_desc *desc, struct param_struct *params,
         char **cmdline, struct meminfo *mi)
@@ -50,4 +51,5 @@ MACHINE_START(S3C3410, "S3C3410, SAMSUNG ELECTRONICS Co., Ltd.")
 	MAINTAINER("Hyok S. Choi <hyok.choi@samsung.com>")
 	FIXUP(fixup_s3c3410)
 	INITIRQ(s3c3410_init_irq)
+	INITTIME(s3c3410_time_init)
 MACHINE_END

@@ -8,9 +8,6 @@
  * it under the terms of the GNU General Public License version 2 as
  * published by the Free Software Foundation.
  */
-#ifndef __ASSEMBLY__
-
-#include <asm/memory.h>
 #include <asm/page.h>
 
 struct mm_struct;
@@ -60,7 +57,4 @@ extern struct processor {
 #define cpu_reset(addr)			processor.reset(addr)
 #define cpu_do_idle()			processor._do_idle()
 #define cpu_dcache_clean_area(addr,sz)	processor.dcache_clean_area(addr,sz)
-
-#define cpu_switch_mm(pgd,mm)	processor.switch_mm(__virt_to_phys((unsigned long)(pgd)),mm)
-
-#endif
+#define cpu_do_switch_mm(pgd,mm)	processor.switch_mm(pgd,mm)

@@ -34,13 +34,14 @@
 #include <linux/initrd.h>
 
 // used by sysctl
-#define DEFAULT_MAX_MAP_COUNT	65536
-int sysctl_max_map_count = DEFAULT_MAX_MAP_COUNT;
+//#define DEFAULT_MAX_MAP_COUNT	65536
+//int sysctl_max_map_count = DEFAULT_MAX_MAP_COUNT;
 
 int s3c44b0x_fMHZ 	= CONFIG_ARM_CLK / 1000000;
 int s3c44b0x_finMHZ	= CONFIG_ARM_CLK_FIN / 1000000;
 
 extern void __init s3c44b0x_init_irq(void);
+extern void s3c44b0x_time_init(void);
 
 void __init s3c44b0x_init_machine(void)
 {
@@ -102,4 +103,5 @@ MACHINE_START(S3C44B0, "S3C44B0X Development Board")
 	FIXUP(s3c44b0x_fixup)
 	INITIRQ(s3c44b0x_init_irq)
 	INIT_MACHINE(s3c44b0x_init_machine)
+	INITTIME(s3c44b0x_time_init)
 MACHINE_END

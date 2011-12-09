@@ -2,7 +2,7 @@
 # Makefile for the linux armnommu-specific parts of the memory manager.
 #
 
-obj-y				:= extable.o fault.o \
+obj-y				:= extable.o fault.o consistent.o \
 				   fault-common.o init.o ioremap.o mm.o
 
 obj-$(CONFIG_MODULES)		+= proc-syms.o

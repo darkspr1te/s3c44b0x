@@ -140,6 +140,11 @@ config ARCH_S5C7375
 	help
 	  Samsung's S5C7375 16/32-bit SOC(ARM920T) for internal use.
 
+config ARCH_S3C24A0 
+	bool "Samsung S3C24A0" 
+	help 
+	  Samsung's S3C24A0 media processor based on ARM926EJ core. 
+
 endchoice
 
 config SET_MEM_PARAM
@@ -155,6 +160,7 @@ config DRAM_BASE
 	default 0x0C000000 if ARCH_S3C44B0
 	default 0x00000000 if ARCH_S5C7375
 	default 0x00000000 if ARCH_ESPD_4510B
+	default 0x10000000 if ARCH_S3C24A0 
 	default 0x00800000
 
 config DRAM_SIZE
@@ -164,6 +170,7 @@ config DRAM_SIZE
 	default 0x01000000 if ARCH_S3C44B0
 	default 0x00400000 if ARCH_S5C7375
 	default 0x00800000 if ARCH_ESPD_4510B
+	default 0x04000000 if ARCH_S3C24A0 
 	default 0x00800000
 
 config FLASH_MEM_BASE
@@ -189,7 +196,7 @@ source "arch/armnommu/mach-s3c3410/Kconfig"
 source "arch/armnommu/mach-s3c44b0x/Kconfig"
 source "arch/armnommu/mach-s5c7375/Kconfig"
 source "arch/armnommu/mach-espd_4510b/Kconfig"
-
+source "arch/armnommu/mach-s3c24a0/Kconfig" 
 source arch/armnommu/mm/Kconfig
 
 endmenu

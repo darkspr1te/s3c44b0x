@@ -23,7 +23,7 @@ else
 head-y			:= $(HEADMACH)
 endif
 
-extra-y := $(head-y) init_task.o vmlinux.lds.s
+extra-y := $(head-y) init_task.o vmlinux.lds
 
 # Spell out some dependencies that aren't automatically figured out
 $(obj)/entry.o: 	arch/arm/kernel/entry-header.S include/asm-armnommu/constants.h \

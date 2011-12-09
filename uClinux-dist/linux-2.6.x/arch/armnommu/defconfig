@@ -1,5 +1,7 @@
 #
 # Automatically generated make config: don't edit
+# Linux kernel version: 2.6.9-uc0
+# Tue Nov 23 09:26:36 2004
 #
 CONFIG_ARM=y
 CONFIG_UCLINUX=y
@@ -12,14 +14,13 @@ CONFIG_RWSEM_GENERIC_SPINLOCK=y
 #
 CONFIG_EXPERIMENTAL=y
 # CONFIG_CLEAN_COMPILE is not set
-# CONFIG_STANDALONE is not set
 CONFIG_BROKEN=y
 CONFIG_BROKEN_ON_SMP=y
 
 #
 # General setup
 #
-# CONFIG_SYSVIPC is not set
+CONFIG_LOCALVERSION=""
 # CONFIG_BSD_PROCESS_ACCT is not set
 # CONFIG_SYSCTL is not set
 # CONFIG_AUDIT is not set
@@ -46,6 +47,8 @@ CONFIG_CC_OPTIMIZE_FOR_SIZE=y
 #
 CONFIG_ARCH_ATMEL=y
 # CONFIG_ARCH_S3C3410 is not set
+# CONFIG_ARCH_ESPD_4510B is not set
+# CONFIG_ARCH_S3C44B0 is not set
 # CONFIG_ARCH_S5C7375 is not set
 CONFIG_SET_MEM_PARAM=y
 CONFIG_DRAM_BASE=0x01000000
@@ -72,6 +75,7 @@ CONFIG_CPU_AT91X40=y
 #
 CONFIG_CPU_32=y
 CONFIG_CPU_ARM710=y
+# CONFIG_CPU_S3C4510B is not set
 CONFIG_CPU_32v3=y
 CONFIG_CPU_CACHE_V3=y
 
@@ -103,16 +107,23 @@ CONFIG_BINFMT_FLAT=y
 #
 # Generic Driver Options
 #
+# CONFIG_STANDALONE is not set
+CONFIG_PREVENT_FIRMWARE_BUILD=y
 # CONFIG_DEBUG_DRIVER is not set
 # CONFIG_PM is not set
 CONFIG_PREEMPT=y
 CONFIG_CMDLINE="root=/dev/ram initrd=0x01300000,768K keepinitrd"
-# CONFIG_ALIGNMENT_TRAP is not set
+CONFIG_ALIGNMENT_TRAP=y
 
 #
 # Parallel port support
 #
 # CONFIG_PARPORT is not set
+
+#
+# Memory Technology Devices (MTD)
+#
+# CONFIG_MTD is not set
 
 #
 # Plug and Play support
@@ -125,7 +136,7 @@ CONFIG_CMDLINE="root=/dev/ram initrd=0x01300000,768K keepinitrd"
 CONFIG_BLK_DEV_LOOP=y
 # CONFIG_BLK_DEV_CRYPTOLOOP is not set
 CONFIG_BLK_DEV_RAM=y
-CONFIG_BLK_DEV_RAM_SIZE=4096
+CONFIG_BLK_DEV_RAM_SIZE=2048
 CONFIG_BLK_DEV_INITRD=y
 
 #
@@ -182,7 +193,6 @@ CONFIG_BLK_DEV_INITRD=y
 # CONFIG_GAMEPORT is not set
 CONFIG_SOUND_GAMEPORT=y
 # CONFIG_SERIO is not set
-# CONFIG_SERIO_I8042 is not set
 
 #
 # Input Device Drivers
@@ -207,7 +217,6 @@ CONFIG_SERIAL_ATMEL=y
 CONFIG_SERIAL_ATMEL_CONSOLE=y
 # CONFIG_UNIX98_PTYS is not set
 # CONFIG_LEGACY_PTYS is not set
-# CONFIG_QIC02_TAPE is not set
 
 #
 # IPMI
@@ -220,16 +229,12 @@ CONFIG_SERIAL_ATMEL_CONSOLE=y
 # CONFIG_WATCHDOG is not set
 # CONFIG_NVRAM is not set
 # CONFIG_RTC is not set
-# CONFIG_GEN_RTC is not set
 # CONFIG_DTLK is not set
 # CONFIG_R3964 is not set
-# CONFIG_APPLICOM is not set
 
 #
 # Ftape, the floppy tape device driver
 #
-# CONFIG_FTAPE is not set
-# CONFIG_AGP is not set
 # CONFIG_DRM is not set
 # CONFIG_RAW_DRIVER is not set
 
@@ -272,7 +277,8 @@ CONFIG_ROMFS_FS=y
 #
 # DOS/FAT/NT Filesystems
 #
-# CONFIG_FAT_FS is not set
+# CONFIG_MSDOS_FS is not set
+# CONFIG_VFAT_FS is not set
 # CONFIG_NTFS_FS is not set
 
 #
@@ -339,8 +345,8 @@ CONFIG_FRAME_POINTER=y
 CONFIG_DEBUG_INFO=y
 CONFIG_DEBUG_KERNEL=y
 CONFIG_DEBUG_SLAB=y
-CONFIG_MAGIC_SYSRQ=y
-# CONFIG_DEBUG_SPINLOCK is not set
+# CONFIG_MAGIC_SYSRQ is not set
+CONFIG_DEBUG_SPINLOCK=y
 CONFIG_DEBUG_WAITQ=y
 CONFIG_DEBUG_BUGVERBOSE=y
 CONFIG_DEBUG_ERRORS=y
@@ -359,5 +365,6 @@ CONFIG_DEBUG_ERRORS=y
 #
 # Library routines
 #
+# CONFIG_CRC_CCITT is not set
 # CONFIG_CRC32 is not set
 # CONFIG_LIBCRC32C is not set

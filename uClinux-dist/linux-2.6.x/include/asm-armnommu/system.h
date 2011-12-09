@@ -53,9 +53,10 @@
 
 #ifndef __ASSEMBLY__
 
-#include <linux/kernel.h>
+#include <linux/linkage.h>
 
 struct thread_info;
+struct task_struct;
 
 /* information about the system we're running on */
 extern unsigned int system_rev;
@@ -85,19 +86,8 @@ extern asmlinkage void __backtrace(void);
 
 extern int cpu_architecture(void);
 
-#define set_cr(x)					\
-	__asm__ __volatile__(				\
-	"mcr	p15, 0, %0, c1, c0, 0	@ set CR"	\
-	: : "r" (x) : "cc")
-
-#define get_cr()					\
-	({						\
-	unsigned int __val;				\
-	__asm__ __volatile__(				\
-	"mrc	p15, 0, %0, c1, c0, 0	@ get CR"	\
-	: "=r" (__val) : : "cc");			\
-	__val;						\
-	})
+#define set_cr(x)
+#define get_cr(x) 
 
 extern unsigned long cr_no_alignment;	/* defined in entry-armv.S */
 extern unsigned long cr_alignment;	/* defined in entry-armv.S */
@@ -163,8 +153,6 @@ do {									\
  * `prev' will never be the same as `next'.  schedule() itself
  * contains the memory barrier to tell GCC not to cache `current'.
  */
-struct thread_info;
-struct task_struct;
 extern struct task_struct *__switch_to(struct task_struct *, struct thread_info *, struct thread_info *);
 
 #define switch_to(prev,next,last)						\

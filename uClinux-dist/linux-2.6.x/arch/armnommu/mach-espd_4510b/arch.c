@@ -28,6 +28,7 @@
 #include <asm/mach/arch.h>
 
 extern void __init s3c4510b_init_irq(void);
+extern void s3c4510b_time_init(void);
 
 void __init s3c4510b_init_machine(void) {
 	/* enable LED 0 */
@@ -39,4 +40,5 @@ MACHINE_START(ESPD_4510B, "ESPD 4510B(S3C4510B)")
 	INITIRQ( s3c4510b_init_irq)
 	INIT_MACHINE( s3c4510b_init_machine)
 	BOOT_PARAMS(0x00000800)
+	INITTIME( s3c4510b_time_init)
 MACHINE_END

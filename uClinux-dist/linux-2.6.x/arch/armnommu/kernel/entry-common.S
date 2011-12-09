@@ -121,11 +121,6 @@ ENTRY(vector_swi)
 	get_scno
 	arm710_bug_check scno, ip
 
-#ifdef CONFIG_ALIGNMENT_TRAP
-	ldr	ip, __cr_alignment
-	ldr	ip, [ip]
-	mcr	p15, 0, ip, c1, c0		@ update control register
-#endif
 	enable_irq ip
 
 	str	r4, [sp, #-S_OFF]!		@ push fifth arg
@@ -171,13 +166,6 @@ __sys_trace_return:
 	mov	r0, #1				@ trace exit [IP = 1]
 	bl	syscall_trace
 	b	ret_slow_syscall
-
-	.align	5
-#ifdef CONFIG_ALIGNMENT_TRAP
-	.type	__cr_alignment, #object
-__cr_alignment:
-	.word	cr_alignment
-#endif
 
 	.type	sys_call_table, #object
 ENTRY(sys_call_table)

@@ -14,9 +14,11 @@
 #define __ASM_ARMNOMMU_MEMORY_H
 
 #include <linux/config.h>
+#include <linux/compiler.h>
 #include <asm/arch/memory.h>
 
 
+#ifndef __ASSEMBLY__
 
 #define virt_to_bus(x) ((unsigned long) (x))
 #define bus_to_virt(x) ((void *) (x))
@@ -33,6 +35,20 @@
 
 #define __pa(x)			__virt_to_phys((unsigned long)(x))
 #define __va(x)			((void *)__phys_to_virt((unsigned long)(x)))
+
+/*
+ * The DMA mask corresponding to the maximum bus address allocatable
+ * using GFP_DMA.  The default here places no restriction on DMA
+ * allocations.  This must be the smallest DMA mask in the system,
+ * so a successful GFP_DMA allocation will always satisfy this.
+ */
+#ifndef ISA_DMA_THRESHOLD
+#define ISA_DMA_THRESHOLD	(0xffffffffULL)
+#endif
+
+#ifndef arch_adjust_zones
+#define arch_adjust_zones(node,size,holes) do { } while (0)
+#endif
 
 #ifndef CONFIG_DISCONTIGMEM
 /*
@@ -65,5 +81,5 @@
  */
 #define page_to_bus(page)	(virt_to_bus(page_address(page)))
 
-
+#endif /* !__ASSEMBLY */
 #endif /* __ASM_ARMNOMMU_MEMORY_H */

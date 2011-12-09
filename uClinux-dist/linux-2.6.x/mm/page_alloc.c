@@ -2052,6 +2052,9 @@ void *__init alloc_large_system_hash(const char *tablename,
 
 	do {
 		size = bucketsize << log2qty;
+#ifndef CONFIG_MMU
+		if(size < PAGE_SIZE) size = PAGE_SIZE;
+#endif
 		table = alloc_bootmem(size);
 	} while (!table && size > PAGE_SIZE && --log2qty);
 

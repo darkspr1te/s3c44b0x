@@ -22,6 +22,8 @@ initrd_phys-$(CONFIG_ARCH_S5C7375)      := 0x00300000
 initrd_phys-$(CONFIG_ARCH_ATMEL)	:= 0x01300000
    zreladdr-$(CONFIG_ARCH_S3C44B0)	:= 0x0c008000
   ztextaddr-$(CONFIG_ARCH_S3C44B0)	:= 0x0c300000
+   zreladdr-$(CONFIG_ARCH_S3C24A0)	:= 0x10008000
+initrd_phys-$(CONFIG_ARCH_S3C24A0)      := 0x10800000
 
 ZRELADDR    := $(zreladdr-y)
 ZTEXTADDR   := $(ztextaddr-y)
